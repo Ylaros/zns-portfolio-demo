@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NexaFlow — Demo fictícia",
-  description: "Demonstração fictícia de uma central operacional, criada exclusivamente para portfólio.",
+  title: "NexaFlow — Demonstração de produto",
+  description: "Demonstração fictícia e interativa de fluxos operacionais, documentos, calendário e gestão.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
