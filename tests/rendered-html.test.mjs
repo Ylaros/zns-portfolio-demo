@@ -31,3 +31,15 @@ test("a demo não contém identificadores internos conhecidos", async () => {
     assert.doesNotMatch(source, new RegExp(forbidden, "i"));
   }
 });
+
+test("cada aba do Cofre possui documentos fictícios próprios", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  for (const prefix of ["NFE-", "NFCE-", "CTE-", "NFSE-", "INC-"]) {
+    assert.match(source, new RegExp(prefix));
+  }
+  for (const label of ["Consumidor", "Transportadora", "Prestador / tomador", "Origem / participante"]) {
+    assert.match(source, new RegExp(label));
+  }
+  assert.match(source, /documentsByType\[type\]/);
+  assert.match(source, /setSelected\(\[\]\)/);
+});

@@ -84,13 +84,60 @@ const boardColumns: Array<{ title: string; tone: Tone; cards: RequestCard[] }> =
   },
 ];
 
-const documents = [
-  { id: "DOC-8421", number: "000.084.210", company: "Aurora Comércio Demo", party: "Norte Suprimentos Simulados", issued: "31/07/2026", value: "R$ 4.280,00", status: "Autorizada", tone: "success" as Tone },
-  { id: "DOC-8417", number: "000.084.173", company: "Horizonte Serviços Lab", party: "Estação Digital Fictícia", issued: "31/07/2026", value: "R$ 1.945,80", status: "Autorizada", tone: "success" as Tone },
-  { id: "DOC-8399", number: "000.083.992", company: "Vértice Mercado Teste", party: "Rota Comercial Demo", issued: "30/07/2026", value: "R$ 786,40", status: "Sem XML", tone: "warning" as Tone },
-  { id: "DOC-8384", number: "000.083.841", company: "Orbe Indústria Fictícia", party: "Matriz Materiais Lab", issued: "29/07/2026", value: "R$ 12.630,00", status: "Cancelada", tone: "danger" as Tone },
-  { id: "DOC-8362", number: "000.083.625", company: "Aurora Comércio Demo", party: "Ponte Serviços Teste", issued: "28/07/2026", value: "R$ 2.105,20", status: "Autorizada", tone: "success" as Tone },
-];
+const cofreTypes = ["NF-e", "NFC-e", "CT-e", "NFS-e", "Incompletos"] as const;
+type CofreType = (typeof cofreTypes)[number];
+type VaultDocument = { id: string; number: string; company: string; party: string; issued: string; value: string; status: string; tone: Tone };
+
+const documentsByType: Record<CofreType, VaultDocument[]> = {
+  "NF-e": [
+    { id: "NFE-8421", number: "000.084.210", company: "Aurora Comércio Demo", party: "Norte Suprimentos Simulados", issued: "31/07/2026", value: "R$ 4.280,00", status: "Autorizada", tone: "success" },
+    { id: "NFE-8417", number: "000.084.173", company: "Horizonte Serviços Lab", party: "Estação Digital Fictícia", issued: "31/07/2026", value: "R$ 1.945,80", status: "Autorizada", tone: "success" },
+    { id: "NFE-8399", number: "000.083.992", company: "Vértice Mercado Teste", party: "Rota Comercial Demo", issued: "30/07/2026", value: "R$ 786,40", status: "Sem XML", tone: "warning" },
+    { id: "NFE-8384", number: "000.083.841", company: "Orbe Indústria Fictícia", party: "Matriz Materiais Lab", issued: "29/07/2026", value: "R$ 12.630,00", status: "Cancelada", tone: "danger" },
+    { id: "NFE-8362", number: "000.083.625", company: "Aurora Comércio Demo", party: "Ponte Serviços Teste", issued: "28/07/2026", value: "R$ 2.105,20", status: "Autorizada", tone: "success" },
+  ],
+  "NFC-e": [
+    { id: "NFCE-3918", number: "000.039.184", company: "Vértice Mercado Teste", party: "Consumidor não identificado", issued: "31/07/2026", value: "R$ 128,70", status: "Autorizada", tone: "success" },
+    { id: "NFCE-3912", number: "000.039.127", company: "Aurora Comércio Demo", party: "Consumidor final demo", issued: "31/07/2026", value: "R$ 54,90", status: "Autorizada", tone: "success" },
+    { id: "NFCE-3886", number: "000.038.865", company: "Vértice Mercado Teste", party: "Consumidor não identificado", issued: "30/07/2026", value: "R$ 312,45", status: "Cancelada", tone: "danger" },
+    { id: "NFCE-3870", number: "000.038.701", company: "Aurora Comércio Demo", party: "Venda balcão fictícia", issued: "30/07/2026", value: "R$ 89,30", status: "Autorizada", tone: "success" },
+    { id: "NFCE-3844", number: "000.038.449", company: "Vértice Mercado Teste", party: "Consumidor final demo", issued: "29/07/2026", value: "R$ 176,00", status: "Sem XML", tone: "warning" },
+  ],
+  "CT-e": [
+    { id: "CTE-7214", number: "000.007.214", company: "Orbe Indústria Fictícia", party: "Rota Sul Transportes Demo", issued: "31/07/2026", value: "R$ 1.480,00", status: "Autorizado", tone: "success" },
+    { id: "CTE-7208", number: "000.007.208", company: "Aurora Comércio Demo", party: "Expresso Horizonte Fictício", issued: "30/07/2026", value: "R$ 945,60", status: "Autorizado", tone: "success" },
+    { id: "CTE-7191", number: "000.007.191", company: "Vértice Mercado Teste", party: "Logística Ponte Lab", issued: "29/07/2026", value: "R$ 2.318,40", status: "Sem XML", tone: "warning" },
+    { id: "CTE-7178", number: "000.007.178", company: "Horizonte Serviços Lab", party: "Via Norte Cargas Demo", issued: "28/07/2026", value: "R$ 680,00", status: "Cancelado", tone: "danger" },
+  ],
+  "NFS-e": [
+    { id: "NFSE-1642", number: "2026/001642", company: "Horizonte Serviços Lab", party: "Clínica Alameda Fictícia", issued: "31/07/2026", value: "R$ 3.600,00", status: "Autorizada", tone: "success" },
+    { id: "NFSE-1635", number: "2026/001635", company: "Aurora Comércio Demo", party: "Consultoria Prisma Demo", issued: "30/07/2026", value: "R$ 2.250,00", status: "Autorizada", tone: "success" },
+    { id: "NFSE-1629", number: "2026/001629", company: "Orbe Indústria Fictícia", party: "Manutenção Íris Lab", issued: "29/07/2026", value: "R$ 890,00", status: "Pendente", tone: "warning" },
+    { id: "NFSE-1614", number: "2026/001614", company: "Vértice Mercado Teste", party: "Tecnologia Nexo Fictícia", issued: "28/07/2026", value: "R$ 5.120,00", status: "Cancelada", tone: "danger" },
+  ],
+  Incompletos: [
+    { id: "INC-0318", number: "Resumo 0318", company: "Aurora Comércio Demo", party: "Participante não informado", issued: "31/07/2026", value: "R$ 1.180,00", status: "XML incompleto", tone: "warning" },
+    { id: "INC-0309", number: "Resumo 0309", company: "Vértice Mercado Teste", party: "Cadastro em validação", issued: "30/07/2026", value: "R$ 420,50", status: "Dados pendentes", tone: "warning" },
+    { id: "INC-0297", number: "Resumo 0297", company: "Orbe Indústria Fictícia", party: "Origem demonstrativa", issued: "29/07/2026", value: "Não informado", status: "Sem valor", tone: "neutral" },
+    { id: "INC-0285", number: "Resumo 0285", company: "Horizonte Serviços Lab", party: "Prestador não identificado", issued: "28/07/2026", value: "R$ 760,00", status: "Em recuperação", tone: "info" },
+  ],
+};
+
+const vaultStats: Record<CofreType, { total: string; authorized: string; canceled: string; missing: string; rate: string }> = {
+  "NF-e": { total: "1.284", authorized: "1.261", canceled: "12", missing: "11", rate: "98,2% dos documentos" },
+  "NFC-e": { total: "3.842", authorized: "3.806", canceled: "22", missing: "14", rate: "99,1% dos documentos" },
+  "CT-e": { total: "426", authorized: "418", canceled: "3", missing: "5", rate: "98,1% dos documentos" },
+  "NFS-e": { total: "312", authorized: "303", canceled: "4", missing: "5", rate: "97,1% dos documentos" },
+  Incompletos: { total: "11", authorized: "4", canceled: "2", missing: "5", rate: "4 registros recuperados" },
+};
+
+const vaultPartyLabels: Record<CofreType, string> = {
+  "NF-e": "Emitente / destinatário",
+  "NFC-e": "Consumidor",
+  "CT-e": "Transportadora",
+  "NFS-e": "Prestador / tomador",
+  Incompletos: "Origem / participante",
+};
 
 const companies = [
   { code: "DEM-1042", name: "Aurora Comércio Demo", segment: "Comércio", modules: ["Fiscal", "Contábil", "Operações"], open: 3, tone: "success" as Tone },
@@ -181,21 +228,19 @@ function Operations({ tab, setTab, onNotice }: { tab: OperationsTab; setTab: (ta
   </>;
 }
 
-const cofreTypes = ["NF-e", "NFC-e", "CT-e", "NFS-e", "Incompletos"] as const;
-type CofreType = (typeof cofreTypes)[number];
-
 function Vault({ type, setType, onNotice }: { type: CofreType; setType: (type: CofreType) => void; onNotice: (message: string) => void }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
-  const filtered = documents.filter(item => `${item.number} ${item.company} ${item.party}`.toLowerCase().includes(query.toLowerCase()));
+  const stats = vaultStats[type];
+  const filtered = documentsByType[type].filter(item => `${item.number} ${item.company} ${item.party}`.toLowerCase().includes(query.toLowerCase()));
   const toggle = (id: string) => setSelected(items => items.includes(id) ? items.filter(item => item !== id) : [...items, id]);
   return <>
-    <div className="module-tabs vault-tabs" role="tablist" aria-label="Tipos de documento"><span>Cofre</span>{cofreTypes.map(item=><button key={item} role="tab" aria-selected={type===item} className={type===item?"active":""} onClick={()=>setType(item)}>{item}</button>)}</div>
-    <section className="kpi-grid compact"><Kpi label={`Total de ${type}`} value={type === "Incompletos" ? "11" : "1.284"} detail="No período selecionado" /><Kpi label="Autorizadas" value="1.261" detail="98,2% dos documentos" tone="success" /><Kpi label="Canceladas" value="12" detail="0,9% dos documentos" tone="danger" /><Kpi label="Sem XML" value="11" detail="Requer acompanhamento" tone="warning" /></section>
+    <div className="module-tabs vault-tabs" role="tablist" aria-label="Tipos de documento"><span>Cofre</span>{cofreTypes.map(item=><button key={item} role="tab" aria-selected={type===item} className={type===item?"active":""} onClick={()=>{setType(item);setQuery("");setSelected([]);}}>{item}</button>)}</div>
+    <section className="kpi-grid compact"><Kpi label={`Total de ${type}`} value={stats.total} detail="No período selecionado" /><Kpi label={type === "Incompletos" ? "Recuperados" : "Autorizados"} value={stats.authorized} detail={stats.rate} tone="success" /><Kpi label={type === "Incompletos" ? "Em validação" : "Cancelados"} value={stats.canceled} detail={type === "Incompletos" ? "Revisão demonstrativa" : "No período selecionado"} tone="danger" /><Kpi label={type === "Incompletos" ? "Pendentes" : "Sem XML"} value={stats.missing} detail="Requer acompanhamento" tone="warning" /></section>
     <section className="panel vault-panel">
       <div className="vault-toolbar"><div className="search-box"><select aria-label="Tipo de busca"><option>Número</option><option>Empresa</option><option>Participante</option></select><input aria-label="Buscar documentos" placeholder="Buscar no Cofre..." value={query} onChange={event=>setQuery(event.target.value)} /></div><div><button className="quiet-button" onClick={()=>onNotice("Filtros avançados abertos")}>⌄ Filtros avançados</button><button className="quiet-button" onClick={()=>setQuery("")}>Limpar</button></div><div className="vault-actions"><button className="quiet-button" onClick={()=>setSelected(filtered.map(item=>item.id))}>Selecionar página</button><button className="accent-button" onClick={()=>onNotice("Download fictício preparado")}>Baixar filtrados</button><button className="quiet-button" onClick={()=>onNotice("Relatório fictício gerado")}>Relatório</button></div></div>
       {selected.length > 0 && <div className="batch-bar"><strong>{selected.length} documento(s) selecionado(s)</strong><button onClick={()=>onNotice("Tag fictícia aplicada")}>Aplicar tag</button><button onClick={()=>onNotice("Solicitação fictícia aberta com os documentos")}>Criar solicitação</button><button onClick={()=>setSelected([])}>Limpar seleção</button></div>}
-      <div className="data-table-wrap"><table className="data-table"><thead><tr><th><span className="sr-only">Selecionar</span></th><th>Número</th><th>Empresa</th><th>Emitente / prestador</th><th>Emissão</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>{filtered.map(item=><tr key={item.id} className={selected.includes(item.id)?"selected":""}><td><input type="checkbox" aria-label={`Selecionar documento ${item.number}`} checked={selected.includes(item.id)} onChange={()=>toggle(item.id)} /></td><td><strong>{item.number}</strong><code>{item.id}</code></td><td>{item.company}</td><td>{item.party}</td><td>{item.issued}</td><td>{item.value}</td><td><Status tone={item.tone}>{item.status}</Status></td><td><button aria-label={`Abrir ações do documento ${item.number}`} onClick={()=>onNotice(`Ações de ${item.id} abertas`)}>•••</button></td></tr>)}</tbody></table>{filtered.length===0&&<div className="empty-state"><span>⌕</span><strong>Nenhum documento encontrado</strong><p>Altere a busca para ver os dados fictícios.</p></div>}</div>
+      <div className="data-table-wrap"><table className="data-table"><thead><tr><th><span className="sr-only">Selecionar</span></th><th>Número</th><th>Empresa</th><th>{vaultPartyLabels[type]}</th><th>Emissão</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>{filtered.map(item=><tr key={item.id} className={selected.includes(item.id)?"selected":""}><td><input type="checkbox" aria-label={`Selecionar documento ${item.number}`} checked={selected.includes(item.id)} onChange={()=>toggle(item.id)} /></td><td><strong>{item.number}</strong><code>{item.id}</code></td><td>{item.company}</td><td>{item.party}</td><td>{item.issued}</td><td>{item.value}</td><td><Status tone={item.tone}>{item.status}</Status></td><td><button aria-label={`Abrir ações do documento ${item.number}`} onClick={()=>onNotice(`Ações de ${item.id} abertas`)}>•••</button></td></tr>)}</tbody></table>{filtered.length===0&&<div className="empty-state"><span>⌕</span><strong>Nenhum documento encontrado</strong><p>Altere a busca para ver os dados fictícios.</p></div>}</div>
     </section>
   </>;
 }
