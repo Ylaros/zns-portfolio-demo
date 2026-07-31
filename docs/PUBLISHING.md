@@ -1,13 +1,13 @@
-# Publicação futura — bloqueada até aprovação manual
+# Publicação aprovada
 
-Mantenha o repositório privado e o GitHub Pages desativado durante todo o desenvolvimento e revisão.
+A publicação foi autorizada pelo proprietário após revisão privada. O workflow ativo valida e publica somente a demonstração estática gerada a partir da branch `main`.
 
-Após aprovação expressa do proprietário:
+Para uma nova versão:
 
 1. Audite novamente arquivos e histórico Git conforme `SECURITY.md`.
-2. Torne `Ylaros/zns-portfolio-demo` público manualmente em **Settings → General → Danger Zone**.
-3. Copie `docs/pages-workflow.yml.example` para `.github/workflows/pages.yml`.
-4. Em **Settings → Pages**, selecione **GitHub Actions** como fonte.
-5. Execute o workflow manualmente, valide a rota `/zns-portfolio-demo/` e faça uma nova auditoria do conteúdo acessível.
+2. Abra uma pull request a partir de uma branch separada.
+3. Aguarde lint, build, testes e auditoria.
+4. Faça merge em `main`; o workflow `.github/workflows/pages.yml` publica o site.
+5. Valide `https://ylaros.github.io/zns-portfolio-demo/` e repita a auditoria do conteúdo acessível.
 
-Não há domínio próprio nem workflow ativo de deploy.
+Não há domínio próprio configurado.

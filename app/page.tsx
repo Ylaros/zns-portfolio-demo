@@ -40,7 +40,7 @@ export default function Home() {
         </nav>
         <div className="aside-bottom">
           <div className="demo-user"><span>YD</span><div><strong>Usuário Demo</strong><small>Acesso fictício</small></div></div>
-          <a href="https://github.com/Ylaros/Ylaros.github.io">← Voltar ao portfólio</a>
+          <a href="https://ylaros.github.io/">← Voltar ao portfólio</a>
         </div>
       </aside>
 

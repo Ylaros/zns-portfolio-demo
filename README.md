@@ -2,6 +2,9 @@
 
 Interface autoral criada exclusivamente para portfólio. O nome NexaFlow, as empresas, os identificadores, métricas e fluxos são fictícios. Este repositório não contém código, telas, dados, URLs, credenciais ou configurações do ZNS real.
 
+- Demonstração: https://ylaros.github.io/zns-portfolio-demo/
+- Portfólio: https://ylaros.github.io/
+
 ## Desenvolvimento local
 
 ```bash
@@ -17,4 +20,4 @@ npm test
 npm run build:pages
 ```
 
-O GitHub Pages não está habilitado. Consulte `docs/PUBLISHING.md` apenas após a auditoria e aprovação manual.
+O deploy é feito por GitHub Actions após alterações aprovadas na branch `main`.
