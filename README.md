@@ -2,7 +2,16 @@
 
 Interface autoral criada exclusivamente para portfólio. O nome NexaFlow, as empresas, os identificadores, métricas e fluxos são fictícios. Este repositório não contém código, telas, dados, URLs, credenciais ou configurações do ZNS real.
 
-As categorias Visão geral, Operações, Documentos, Automação, Empresas e Relatórios são interativas e apresentam conjuntos distintos de indicadores, gráficos e tabelas sintéticas.
+As áreas disponíveis preservam o sentido dos fluxos do produto, mas foram implementadas do zero:
+
+- **Visão geral:** indicadores, atividade, compromissos e alertas;
+- **Central de Operações:** dashboard, quadro, solicitações, pendências e cronograma;
+- **Cofre:** tipos de documento, indicadores, filtros, seleção e listagem;
+- **Calendário:** visões de mês, semana, dia e agenda;
+- **Empresas:** diretório pesquisável de cadastros demonstrativos;
+- **Tecnologias:** ficha técnica pública da arquitetura e das práticas do projeto.
+
+Todas as interações usam apenas estado local e dados sintéticos. Não há conexão com APIs, serviços ou infraestrutura do ZNS.
 
 - Demonstração: https://ylaros.github.io/zns-portfolio-demo/
 - Portfólio: https://ylaros.github.io/

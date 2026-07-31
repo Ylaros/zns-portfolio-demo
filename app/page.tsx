@@ -1,226 +1,278 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 
-const workspaceViews = ["Visão geral", "Operações", "Documentos", "Automação"] as const;
-const managementViews = ["Empresas", "Relatórios"] as const;
-const views = [...workspaceViews, ...managementViews] as const;
-type ViewName = (typeof views)[number];
+const productModules = ["Visão geral", "Central de Operações", "Cofre", "Calendário", "Empresas"] as const;
+const portfolioModules = ["Tecnologias"] as const;
+const modules = [...productModules, ...portfolioModules] as const;
+type ModuleName = (typeof modules)[number];
 
-type Tone = "success" | "warning" | "neutral";
+type Tone = "success" | "warning" | "danger" | "info" | "neutral";
+type RequestCard = { code: string; title: string; company: string; owner: string; due: string; tone: Tone; tag: string };
 
-type DashboardView = {
-  eyebrow: string;
-  actionLabel: string;
-  notice: string;
-  metrics: Array<{ icon: string; tone: string; label: string; value: string; note: string; noteTone: "positive" | "attention" | "neutral" }>;
-  chart: { title: string; subtitle: string; bars: number[]; legend: string; reference: string };
-  health: { title: string; subtitle: string; percent: number; center: string; label: string; items: Array<{ label: string; value: string; tone: string }> };
-  table: {
-    title: string;
-    subtitle: string;
-    columns: [string, string, string];
-    rows: Array<{ name: string; code: string; task: string; status: string; tone: Tone; progress: number }>;
-  };
-};
-
-const dashboardViews: Record<ViewName, DashboardView> = {
+const moduleMeta: Record<ModuleName, { eyebrow: string; description: string; action?: string }> = {
   "Visão geral": {
-    eyebrow: "Central de operações",
-    actionLabel: "Gerar resumo fictício",
-    notice: "Resumo fictício preparado",
-    metrics: [
-      { icon: "↗", tone: "violet", label: "PROCESSOS ATIVOS", value: "42", note: "+8,2% vs. período anterior", noteTone: "positive" },
-      { icon: "✓", tone: "green", label: "TAXA DE CONCLUSÃO", value: "96,4%", note: "+2,1% desempenho sintético", noteTone: "positive" },
-      { icon: "!", tone: "amber", label: "ITENS PARA REVISAR", value: "7", note: "3 vencem hoje", noteTone: "attention" },
-      { icon: "⌁", tone: "blue", label: "TEMPO MÉDIO", value: "12m", note: "−18% tempo operacional", noteTone: "positive" },
-    ],
-    chart: { title: "Volume processado", subtitle: "Eventos fictícios por dia", bars: [44, 58, 51, 68, 62, 81, 73, 91, 78, 96, 88, 100], legend: "Período atual", reference: "Referência sintética" },
-    health: { title: "Saúde da operação", subtitle: "Distribuição do fluxo", percent: 84, center: "96%", label: "No prazo", items: [{ label: "No prazo", value: "84", tone: "green-dot" }, { label: "Atenção", value: "9", tone: "amber-dot" }, { label: "Pendente", value: "3", tone: "gray-dot" }] },
-    table: { title: "Fila de trabalho", subtitle: "Empresas e rotinas demonstrativas", columns: ["Empresa fictícia", "Identificador", "Rotina"], rows: [
-      { name: "Aurora Comércio Demo", code: "DEM-1042", status: "Concluído", tone: "success", task: "Conciliação mensal", progress: 100 },
-      { name: "Horizonte Serviços Lab", code: "DEM-2187", status: "Em análise", tone: "warning", task: "Revisão documental", progress: 68 },
-      { name: "Vértice Mercado Teste", code: "DEM-3301", status: "Pendente", tone: "neutral", task: "Classificação assistida", progress: 42 },
-      { name: "Orbe Indústria Fictícia", code: "DEM-4479", status: "Concluído", tone: "success", task: "Fechamento operacional", progress: 100 },
-    ] },
+    eyebrow: "Centro operacional",
+    description: "Uma leitura rápida do trabalho, dos documentos e dos próximos compromissos.",
   },
-  "Operações": {
-    eyebrow: "Execução e filas",
-    actionLabel: "Iniciar rotina demo",
-    notice: "Rotina demonstrativa iniciada",
-    metrics: [
-      { icon: "▶", tone: "violet", label: "ROTINAS EM EXECUÇÃO", value: "9", note: "2 iniciadas nesta hora", noteTone: "positive" },
-      { icon: "⇄", tone: "green", label: "JOBS CONCLUÍDOS", value: "318", note: "98,7% sem reprocesso", noteTone: "positive" },
-      { icon: "!", tone: "amber", label: "ALERTAS OPERACIONAIS", value: "4", note: "Todos fictícios", noteTone: "attention" },
-      { icon: "◷", tone: "blue", label: "FILA MÉDIA", value: "03m", note: "Dentro do objetivo", noteTone: "positive" },
-    ],
-    chart: { title: "Execuções por horário", subtitle: "Jobs sintéticos concluídos", bars: [35, 42, 48, 66, 82, 91, 74, 68, 88, 79, 59, 46], legend: "Jobs concluídos", reference: "Capacidade simulada" },
-    health: { title: "Estado das filas", subtitle: "Distribuição operacional", percent: 78, center: "78%", label: "Livres", items: [{ label: "Livres", value: "7", tone: "green-dot" }, { label: "Processando", value: "2", tone: "amber-dot" }, { label: "Pausadas", value: "0", tone: "gray-dot" }] },
-    table: { title: "Rotinas recentes", subtitle: "Execuções inteiramente simuladas", columns: ["Rotina fictícia", "Job", "Responsável"], rows: [
-      { name: "Conferência Aurora", code: "JOB-0410", task: "Worker Atlas", status: "Executando", tone: "warning", progress: 76 },
-      { name: "Fechamento Horizonte", code: "JOB-0409", task: "Worker Íris", status: "Concluído", tone: "success", progress: 100 },
-      { name: "Validação Vértice", code: "JOB-0408", task: "Worker Atlas", status: "Na fila", tone: "neutral", progress: 18 },
-      { name: "Resumo Orbe", code: "JOB-0407", task: "Worker Nexo", status: "Concluído", tone: "success", progress: 100 },
-    ] },
+  "Central de Operações": {
+    eyebrow: "Solicitações e tarefas",
+    description: "Organize demandas, responsáveis, prazos e entregas em um único fluxo.",
+    action: "Nova solicitação",
   },
-  "Documentos": {
-    eyebrow: "Documentos e validação",
-    actionLabel: "Simular importação",
-    notice: "Importação fictícia concluída",
-    metrics: [
-      { icon: "▱", tone: "violet", label: "DOCUMENTOS NO PERÍODO", value: "1.284", note: "+126 nesta semana", noteTone: "positive" },
-      { icon: "✓", tone: "green", label: "VALIDADOS", value: "99,1%", note: "Sem dados reais", noteTone: "positive" },
-      { icon: "!", tone: "amber", label: "DIVERGÊNCIAS", value: "11", note: "5 aguardam revisão", noteTone: "attention" },
-      { icon: "⌁", tone: "blue", label: "ARMAZENAMENTO DEMO", value: "2,4 GB", note: "Arquivos simulados", noteTone: "neutral" },
-    ],
-    chart: { title: "Documentos recebidos", subtitle: "Volume sintético por dia", bars: [52, 47, 61, 58, 72, 69, 84, 76, 92, 87, 95, 89], legend: "Recebidos", reference: "Validados" },
-    health: { title: "Qualidade documental", subtitle: "Resultado das validações", percent: 91, center: "99%", label: "Válidos", items: [{ label: "Válidos", value: "1.273", tone: "green-dot" }, { label: "Revisão", value: "8", tone: "amber-dot" }, { label: "Pendentes", value: "3", tone: "gray-dot" }] },
-    table: { title: "Documentos recentes", subtitle: "Metadados criados para demonstração", columns: ["Documento fictício", "Tipo", "Origem"], rows: [
-      { name: "Pacote Aurora — Jul/26", code: "XML-DEMO", task: "Upload manual", status: "Validado", tone: "success", progress: 100 },
-      { name: "Relatório Horizonte 08", code: "XLSX-DEMO", task: "Integração simulada", status: "Em análise", tone: "warning", progress: 64 },
-      { name: "Resumo Vértice Q3", code: "PDF-DEMO", task: "Portal fictício", status: "Pendente", tone: "neutral", progress: 35 },
-      { name: "Lote Orbe 4479", code: "ZIP-DEMO", task: "Upload manual", status: "Validado", tone: "success", progress: 100 },
-    ] },
+  Cofre: {
+    eyebrow: "Documentos fiscais",
+    description: "Consulte documentos por tipo, período, empresa e situação documental.",
+    action: "Importar XML demo",
   },
-  "Automação": {
-    eyebrow: "Agendamentos e regras",
-    actionLabel: "Criar automação demo",
-    notice: "Automação fictícia criada",
-    metrics: [
-      { icon: "◇", tone: "violet", label: "AUTOMAÇÕES ATIVAS", value: "16", note: "4 categorias simuladas", noteTone: "positive" },
-      { icon: "✓", tone: "green", label: "EXECUÇÕES NO MÊS", value: "892", note: "97,8% concluídas", noteTone: "positive" },
-      { icon: "!", tone: "amber", label: "REGRAS EM REVISÃO", value: "3", note: "Sem impacto real", noteTone: "attention" },
-      { icon: "◷", tone: "blue", label: "TEMPO ECONOMIZADO", value: "38h", note: "Estimativa fictícia", noteTone: "neutral" },
-    ],
-    chart: { title: "Execuções automáticas", subtitle: "Acionamentos sintéticos por dia", bars: [28, 45, 39, 64, 55, 73, 68, 86, 82, 94, 91, 98], legend: "Automáticas", reference: "Manuais evitadas" },
-    health: { title: "Confiabilidade", subtitle: "Resultado dos agendamentos", percent: 88, center: "98%", label: "Sucesso", items: [{ label: "Sucesso", value: "872", tone: "green-dot" }, { label: "Retry", value: "17", tone: "amber-dot" }, { label: "Pausadas", value: "3", tone: "gray-dot" }] },
-    table: { title: "Agenda de automações", subtitle: "Regras e horários demonstrativos", columns: ["Automação fictícia", "Agenda", "Próxima execução"], rows: [
-      { name: "Conferência matinal", code: "Diária 08:00", task: "Amanhã, 08:00", status: "Ativa", tone: "success", progress: 100 },
-      { name: "Revisão de pendências", code: "A cada 2h", task: "Hoje, 16:00", status: "Ativa", tone: "success", progress: 82 },
-      { name: "Resumo semanal", code: "Sexta 17:30", task: "Sex, 17:30", status: "Em revisão", tone: "warning", progress: 58 },
-      { name: "Arquivo mensal", code: "Dia 01", task: "01/08, 06:00", status: "Pausada", tone: "neutral", progress: 24 },
-    ] },
+  Calendário: {
+    eyebrow: "Agenda da equipe",
+    description: "Compromissos, prazos operacionais e disponibilidade em uma visão compartilhada.",
+    action: "Novo compromisso",
   },
-  "Empresas": {
-    eyebrow: "Carteira demonstrativa",
-    actionLabel: "Adicionar empresa demo",
-    notice: "Empresa fictícia adicionada à simulação",
-    metrics: [
-      { icon: "◎", tone: "violet", label: "EMPRESAS DEMO", value: "24", note: "+3 neste trimestre", noteTone: "positive" },
-      { icon: "✓", tone: "green", label: "CARTEIRA ATIVA", value: "22", note: "91,7% do total", noteTone: "positive" },
-      { icon: "!", tone: "amber", label: "ONBOARDINGS", value: "2", note: "Etapas simuladas", noteTone: "attention" },
-      { icon: "⌁", tone: "blue", label: "SEGMENTOS", value: "6", note: "Classificação fictícia", noteTone: "neutral" },
-    ],
-    chart: { title: "Evolução da carteira", subtitle: "Empresas fictícias ativas", bars: [36, 40, 43, 48, 51, 57, 61, 66, 72, 78, 86, 94], legend: "Carteira ativa", reference: "Novos cadastros" },
-    health: { title: "Status da carteira", subtitle: "Distribuição das empresas", percent: 92, center: "92%", label: "Ativas", items: [{ label: "Ativas", value: "22", tone: "green-dot" }, { label: "Onboarding", value: "2", tone: "amber-dot" }, { label: "Pausadas", value: "0", tone: "gray-dot" }] },
-    table: { title: "Diretório de empresas", subtitle: "Carteira integralmente fictícia", columns: ["Empresa fictícia", "Código", "Segmento"], rows: [
-      { name: "Aurora Comércio Demo", code: "DEM-1042", task: "Comércio", status: "Ativa", tone: "success", progress: 100 },
-      { name: "Horizonte Serviços Lab", code: "DEM-2187", task: "Serviços", status: "Ativa", tone: "success", progress: 100 },
-      { name: "Vértice Mercado Teste", code: "DEM-3301", task: "Varejo", status: "Onboarding", tone: "warning", progress: 72 },
-      { name: "Orbe Indústria Fictícia", code: "DEM-4479", task: "Indústria", status: "Ativa", tone: "success", progress: 100 },
-    ] },
+  Empresas: {
+    eyebrow: "Carteira de clientes",
+    description: "Diretório demonstrativo com contexto operacional e módulos ativos.",
+    action: "Nova empresa demo",
   },
-  "Relatórios": {
-    eyebrow: "Análises e exportações",
-    actionLabel: "Gerar relatório demo",
-    notice: "Relatório fictício preparado",
-    metrics: [
-      { icon: "⌗", tone: "violet", label: "RELATÓRIOS GERADOS", value: "68", note: "+12 neste mês", noteTone: "positive" },
-      { icon: "✓", tone: "green", label: "EXPORTAÇÕES", value: "51", note: "100% sintéticas", noteTone: "positive" },
-      { icon: "!", tone: "amber", label: "AGENDADOS", value: "5", note: "Próximos 7 dias", noteTone: "attention" },
-      { icon: "◷", tone: "blue", label: "GERAÇÃO MÉDIA", value: "08s", note: "Tempo simulado", noteTone: "neutral" },
-    ],
-    chart: { title: "Relatórios por período", subtitle: "Gerações fictícias por semana", bars: [42, 56, 49, 63, 58, 71, 67, 80, 76, 88, 84, 96], legend: "Gerados", reference: "Exportados" },
-    health: { title: "Formatos utilizados", subtitle: "Distribuição das exportações", percent: 72, center: "72%", label: "PDF", items: [{ label: "PDF", value: "37", tone: "green-dot" }, { label: "XLSX", value: "21", tone: "amber-dot" }, { label: "CSV", value: "10", tone: "gray-dot" }] },
-    table: { title: "Biblioteca de relatórios", subtitle: "Arquivos e períodos demonstrativos", columns: ["Relatório fictício", "Formato", "Período"], rows: [
-      { name: "Resumo executivo Aurora", code: "PDF", task: "Julho/2026", status: "Disponível", tone: "success", progress: 100 },
-      { name: "Operações Horizonte", code: "XLSX", task: "2º trimestre", status: "Disponível", tone: "success", progress: 100 },
-      { name: "Pendências Vértice", code: "CSV", task: "Últimos 30 dias", status: "Gerando", tone: "warning", progress: 61 },
-      { name: "Indicadores Orbe", code: "PDF", task: "Ano de 2026", status: "Agendado", tone: "neutral", progress: 30 },
-    ] },
+  Tecnologias: {
+    eyebrow: "Ficha técnica",
+    description: "Tecnologias e práticas presentes na construção do produto original.",
   },
 };
 
-const icons: Record<ViewName, string> = { "Visão geral": "◫", "Operações": "⌁", "Documentos": "▱", "Automação": "◇", "Empresas": "◎", "Relatórios": "⌗" };
+const navIcons: Record<ModuleName, string> = {
+  "Visão geral": "⌂",
+  "Central de Operações": "◎",
+  Cofre: "▱",
+  Calendário: "□",
+  Empresas: "◇",
+  Tecnologias: "⌘",
+};
+
+const boardColumns: Array<{ title: string; tone: Tone; cards: RequestCard[] }> = [
+  {
+    title: "Em fila",
+    tone: "neutral",
+    cards: [
+      { code: "SOL-1048", title: "Revisar documentos de admissão", company: "Aurora Comércio Demo", owner: "Setor Trabalhista", due: "Hoje, 17:00", tone: "warning", tag: "Documentos" },
+      { code: "SOL-1051", title: "Conferir movimento do período", company: "Orbe Indústria Fictícia", owner: "Setor Fiscal", due: "Amanhã", tone: "info", tag: "Conferência" },
+    ],
+  },
+  {
+    title: "Em atendimento",
+    tone: "info",
+    cards: [
+      { code: "SOL-1039", title: "Preparar fechamento mensal", company: "Horizonte Serviços Lab", owner: "Marina Demo", due: "Hoje, 16:30", tone: "danger", tag: "Prioridade alta" },
+      { code: "SOL-1044", title: "Validar classificação de despesas", company: "Vértice Mercado Teste", owner: "Caio Demo", due: "02 ago", tone: "info", tag: "Fiscal" },
+    ],
+  },
+  {
+    title: "Aguardando cliente",
+    tone: "warning",
+    cards: [
+      { code: "SOL-1027", title: "Enviar comprovantes do período", company: "Aurora Comércio Demo", owner: "Portal do cliente", due: "03 ago", tone: "warning", tag: "Cliente" },
+    ],
+  },
+  {
+    title: "Prontas para concluir",
+    tone: "success",
+    cards: [
+      { code: "SOL-1018", title: "Atualizar cadastro operacional", company: "Orbe Indústria Fictícia", owner: "Lia Demo", due: "Concluída hoje", tone: "success", tag: "Cadastro" },
+      { code: "SOL-1021", title: "Conferir relatório de apoio", company: "Horizonte Serviços Lab", owner: "Marina Demo", due: "Concluída ontem", tone: "success", tag: "Relatório" },
+    ],
+  },
+];
+
+const documents = [
+  { id: "DOC-8421", number: "000.084.210", company: "Aurora Comércio Demo", party: "Norte Suprimentos Simulados", issued: "31/07/2026", value: "R$ 4.280,00", status: "Autorizada", tone: "success" as Tone },
+  { id: "DOC-8417", number: "000.084.173", company: "Horizonte Serviços Lab", party: "Estação Digital Fictícia", issued: "31/07/2026", value: "R$ 1.945,80", status: "Autorizada", tone: "success" as Tone },
+  { id: "DOC-8399", number: "000.083.992", company: "Vértice Mercado Teste", party: "Rota Comercial Demo", issued: "30/07/2026", value: "R$ 786,40", status: "Sem XML", tone: "warning" as Tone },
+  { id: "DOC-8384", number: "000.083.841", company: "Orbe Indústria Fictícia", party: "Matriz Materiais Lab", issued: "29/07/2026", value: "R$ 12.630,00", status: "Cancelada", tone: "danger" as Tone },
+  { id: "DOC-8362", number: "000.083.625", company: "Aurora Comércio Demo", party: "Ponte Serviços Teste", issued: "28/07/2026", value: "R$ 2.105,20", status: "Autorizada", tone: "success" as Tone },
+];
+
+const companies = [
+  { code: "DEM-1042", name: "Aurora Comércio Demo", segment: "Comércio", modules: ["Fiscal", "Contábil", "Operações"], open: 3, tone: "success" as Tone },
+  { code: "DEM-2187", name: "Horizonte Serviços Lab", segment: "Serviços", modules: ["Fiscal", "Trabalhista", "Calendário"], open: 2, tone: "success" as Tone },
+  { code: "DEM-3301", name: "Vértice Mercado Teste", segment: "Varejo", modules: ["Fiscal", "Operações"], open: 4, tone: "warning" as Tone },
+  { code: "DEM-4479", name: "Orbe Indústria Fictícia", segment: "Indústria", modules: ["Fiscal", "Contábil", "Trabalhista"], open: 1, tone: "success" as Tone },
+];
+
+const monthDays = [
+  { day: 27, muted: true }, { day: 28, muted: true }, { day: 29, muted: true }, { day: 30, muted: true }, { day: 31, muted: true },
+  { day: 1 }, { day: 2 }, { day: 3, events: [{ label: "Reunião de alinhamento", tone: "info" }] }, { day: 4 },
+  { day: 5, events: [{ label: "Prazo · SOL-1048", tone: "warning" }] }, { day: 6 }, { day: 7, events: [{ label: "Revisão mensal", tone: "success" }] },
+  { day: 8 }, { day: 9 }, { day: 10, events: [{ label: "Entrega ao cliente", tone: "info" }] }, { day: 11 }, { day: 12 },
+  { day: 13, events: [{ label: "Prazo · SOL-1051", tone: "danger" }] }, { day: 14 }, { day: 15 }, { day: 16 },
+  { day: 17, events: [{ label: "Comitê operacional", tone: "info" }] }, { day: 18 }, { day: 19 }, { day: 20 },
+  { day: 21, events: [{ label: "Fechamento demo", tone: "success" }] }, { day: 22 }, { day: 23 }, { day: 24 },
+  { day: 25, events: [{ label: "Férias · Lia", tone: "neutral" }] }, { day: 26 }, { day: 27 }, { day: 28 }, { day: 29 }, { day: 30 },
+  { day: 31 }, { day: 1, muted: true }, { day: 2, muted: true }, { day: 3, muted: true }, { day: 4, muted: true }, { day: 5, muted: true }, { day: 6, muted: true },
+] as Array<{ day: number; muted?: boolean; events?: Array<{ label: string; tone: string }> }>;
+
+function Status({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+  return <span className={`status status-${tone}`}><i />{children}</span>;
+}
+
+function Kpi({ label, value, detail, tone = "info" }: { label: string; value: string; detail: string; tone?: Tone }) {
+  return <article className="kpi-card"><div className="kpi-label"><i className={`tone-${tone}`} />{label}</div><strong>{value}</strong><p>{detail}</p></article>;
+}
+
+function Overview() {
+  return <>
+    <section className="kpi-grid" aria-label="Indicadores gerais fictícios">
+      <Kpi label="Documentos no período" value="1.284" detail="+126 nesta semana" tone="info" />
+      <Kpi label="Movimento demonstrativo" value="R$ 482 mil" detail="Dados financeiros sintéticos" tone="success" />
+      <Kpi label="Pendências operacionais" value="12" detail="4 vencem hoje" tone="warning" />
+      <Kpi label="Compromissos próximos" value="7" detail="Próximos 14 dias" tone="neutral" />
+    </section>
+    <section className="overview-grid">
+      <article className="panel activity-panel">
+        <div className="panel-head"><div><h2>Atividade do sistema</h2><p>Eventos fictícios processados por dia</p></div><Status tone="success">Operação estável</Status></div>
+        <div className="activity-chart" aria-label="Gráfico demonstrativo de atividade">
+          {[38, 56, 49, 74, 62, 86, 71, 92, 78, 96, 83, 100].map((height, index) => <div key={index}><span style={{ height: `${height}%` }} /><small>{index + 1}</small></div>)}
+        </div>
+      </article>
+      <article className="panel pending-panel">
+        <div className="panel-head"><div><h2>Pendências por módulo</h2><p>Onde está o trabalho agora</p></div></div>
+        <div className="donut"><div><strong>12</strong><span>total</span></div></div>
+        <ul className="summary-list"><li><span><i className="tone-info" />Operações</span><b>7</b></li><li><span><i className="tone-warning" />Cofre</span><b>3</b></li><li><span><i className="tone-neutral" />Calendário</span><b>2</b></li></ul>
+      </article>
+    </section>
+    <section className="overview-bottom">
+      <article className="panel">
+        <div className="panel-head"><div><h2>Próximos compromissos</h2><p>Agenda demonstrativa da equipe</p></div></div>
+        <div className="agenda-preview"><div className="date-tile"><b>03</b><span>AGO</span></div><div><strong>Reunião de alinhamento</strong><p>09:30 · Sala Horizonte · 4 participantes</p></div><Status tone="info">Reunião</Status></div>
+        <div className="agenda-preview"><div className="date-tile"><b>05</b><span>AGO</span></div><div><strong>Prazo da solicitação SOL-1048</strong><p>17:00 · Central de Operações</p></div><Status tone="warning">Prazo</Status></div>
+      </article>
+      <article className="panel">
+        <div className="panel-head"><div><h2>Alertas operacionais</h2><p>Sinais fictícios que pedem atenção</p></div></div>
+        <div className="alert-row"><span className="alert-icon warning">!</span><div><strong>3 documentos aguardam XML</strong><p>Cofre · período atual</p></div><button>Ver</button></div>
+        <div className="alert-row"><span className="alert-icon danger">!</span><div><strong>1 tarefa passou do prazo</strong><p>Central de Operações</p></div><button>Ver</button></div>
+      </article>
+    </section>
+  </>;
+}
+
+const operationsTabs = ["Visão Geral", "Quadros", "Solicitações", "Minhas Pendências", "Cronograma"] as const;
+type OperationsTab = (typeof operationsTabs)[number];
+
+function Operations({ tab, setTab, onNotice }: { tab: OperationsTab; setTab: (tab: OperationsTab) => void; onNotice: (message: string) => void }) {
+  const [selectedRequest, setSelectedRequest] = useState(boardColumns[1].cards[0]);
+  return <>
+    <div className="module-tabs" role="tablist" aria-label="Áreas da Central de Operações">
+      {operationsTabs.map(item => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}</button>)}
+    </div>
+    {tab === "Visão Geral" && <section className="operations-overview">
+      <div className="kpi-grid"><Kpi label="Solicitações ativas" value="18" detail="7 atribuídas a você" /><Kpi label="Tarefas em execução" value="11" detail="84% dentro do prazo" tone="success" /><Kpi label="Aguardando cliente" value="4" detail="2 com retorno hoje" tone="warning" /><Kpi label="Tempo médio" value="1d 6h" detail="−12% no período" tone="neutral" /></div>
+      <div className="overview-grid"><article className="panel"><div className="panel-head"><div><h2>Fluxo operacional</h2><p>Solicitações por situação atual</p></div></div><div className="horizontal-bars">{[["Em fila",7,62],["Em atendimento",5,46],["Aguardando cliente",4,34],["Prontas para concluir",2,20]].map(([label,value,width])=><div key={String(label)}><span>{label}<b>{value}</b></span><i><em style={{width:`${width}%`}} /></i></div>)}</div></article><article className="panel"><div className="panel-head"><div><h2>Meu trabalho</h2><p>Menores itens acionáveis</p></div></div><ul className="task-list"><li><span><i className="tone-danger" />Finalizar fechamento mensal</span><small>Hoje, 16:30</small></li><li><span><i className="tone-warning" />Revisar anexos de admissão</span><small>Hoje, 17:00</small></li><li><span><i className="tone-info" />Validar classificação</span><small>Amanhã</small></li></ul></article></div>
+    </section>}
+    {tab === "Quadros" && <section className="board-view">
+      <div className="view-toolbar"><div><button className="segmented active">Todos</button><button className="segmented">Internas</button><button className="segmented">Externas</button></div><div><button className="quiet-button" onClick={() => onNotice("Filtros do quadro abertos")}>⌕ Filtros</button><button className="quiet-button">Todo período</button></div></div>
+      <div className="board" aria-label="Quadro fictício de solicitações">{boardColumns.map(column => <article className="board-column" key={column.title}><header><span><i className={`tone-${column.tone}`} />{column.title}</span><b>{column.cards.length}</b></header><div className="column-body">{column.cards.map(card => <button className="request-card" key={card.code} onClick={() => { setSelectedRequest(card); onNotice(`${card.code} aberto na prévia`); }}><div className="request-top"><code>{card.code}</code><Status tone={card.tone}>{card.tag}</Status></div><strong>{card.title}</strong><p>{card.company}</p><footer><span className="mini-avatar">{card.owner[0]}</span><small>{card.owner}</small><time>{card.due}</time></footer></button>)}</div></article>)}</div>
+    </section>}
+    {tab === "Solicitações" && <section className="requests-split">
+      <article className="request-list panel"><div className="list-toolbar"><input aria-label="Buscar solicitações" placeholder="Buscar solicitações..." /><button>Filtros</button></div>{boardColumns.flatMap(column => column.cards).map(card => <button key={card.code} className={selectedRequest.code === card.code ? "active" : ""} onClick={() => setSelectedRequest(card)}><span><code>{card.code}</code><Status tone={card.tone}>{card.tag}</Status></span><strong>{card.title}</strong><small>{card.company} · {card.due}</small></button>)}</article>
+      <article className="request-detail panel"><div className="detail-head"><div><code>{selectedRequest.code}</code><h2>{selectedRequest.title}</h2><p>{selectedRequest.company}</p></div><button className="quiet-button" onClick={() => onNotice("Edição simulada aberta")}>Editar</button></div><div className="detail-tabs"><button className="active">Solicitação</button><button>Tarefas (3)</button><button>Mensagens (4)</button></div><div className="detail-grid"><div><h3>Descrição da solicitação</h3><p>Contexto demonstrativo para representar um atendimento estruturado, sem qualquer dado ou texto do sistema original.</p><h3>Tarefas</h3><div className="detail-task"><span>✓</span><div><strong>Receber documentação</strong><p>Concluída · Lia Demo</p></div></div><div className="detail-task active"><span>→</span><div><strong>Executar conferência</strong><p>Em andamento · {selectedRequest.owner}</p></div></div><div className="detail-task"><span>○</span><div><strong>Validar entrega</strong><p>Aguardando etapa anterior</p></div></div></div><aside className="control-card"><h3>Controle da solicitação</h3><label>Status<strong>Em atendimento</strong></label><label>Prioridade<strong>Normal</strong></label><label>Responsável<strong>{selectedRequest.owner}</strong></label><label>Prazo<strong>{selectedRequest.due}</strong></label></aside></div></article>
+    </section>}
+    {tab === "Minhas Pendências" && <section className="my-tasks"><div className="personal-heading"><div><span>MINHAS TAREFAS</span><h2>O que precisa da sua ação</h2></div><Status tone="success">7 itens ativos</Status></div><div className="board personal-board">{boardColumns.slice(0,3).map((column,index)=><article className="board-column" key={column.title}><header><span><i className={index===0?"tone-neutral":index===1?"tone-info":"tone-warning"}/>{index===0?"Em fila":index===1?"Em execução":"Aguardando retorno"}</span><b>{column.cards.length}</b></header><div className="column-body">{column.cards.map(card=><button className="request-card personal" key={card.code} onClick={()=>onNotice(`Tarefa de ${card.code} aberta`)}><code>{card.code}</code><strong>{card.title}</strong><p>{card.company}</p><footer><Status tone={card.tone}>{card.due}</Status><span>→</span></footer></button>)}</div></article>)}</div></section>}
+    {tab === "Cronograma" && <section className="timeline panel"><div className="view-toolbar"><div><button className="segmented active">Auto-ajuste</button><button className="segmented">Mês atual</button><button className="segmented">Próx. 30 dias</button></div><button className="quiet-button">Médio · 26px/dia</button></div><div className="timeline-grid"><div className="timeline-labels"><b>Solicitação / tarefa</b>{[["SOL-1039","Fechamento mensal"],["└","Receber arquivos"],["└","Conferir dados"],["SOL-1048","Documentos de admissão"],["└","Validar anexos"]].map((row,i)=><span key={i}><code>{row[0]}</code>{row[1]}</span>)}</div><div className="timeline-days"><div className="days-head">{["28 SEG","29 TER","30 QUA","31 QUI","01 SEX","02 SÁB","03 DOM","04 SEG","05 TER"].map(day=><b key={day}>{day}</b>)}</div><div className="gantt-row"><i className="gantt-summary" style={{left:"4%",width:"48%"}} /></div><div className="gantt-row"><i className="gantt-done" style={{left:"6%",width:"24%"}}>Concluída</i></div><div className="gantt-row"><i className="gantt-active" style={{left:"28%",width:"34%"}}>Conferência</i></div><div className="gantt-row"><i className="gantt-summary" style={{left:"45%",width:"48%"}} /></div><div className="gantt-row"><i className="gantt-warning" style={{left:"50%",width:"34%"}}>Validar anexos</i></div></div></div></section>}
+  </>;
+}
+
+const cofreTypes = ["NF-e", "NFC-e", "CT-e", "NFS-e", "Incompletos"] as const;
+type CofreType = (typeof cofreTypes)[number];
+
+function Vault({ type, setType, onNotice }: { type: CofreType; setType: (type: CofreType) => void; onNotice: (message: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const filtered = documents.filter(item => `${item.number} ${item.company} ${item.party}`.toLowerCase().includes(query.toLowerCase()));
+  const toggle = (id: string) => setSelected(items => items.includes(id) ? items.filter(item => item !== id) : [...items, id]);
+  return <>
+    <div className="module-tabs vault-tabs" role="tablist" aria-label="Tipos de documento"><span>Cofre</span>{cofreTypes.map(item=><button key={item} role="tab" aria-selected={type===item} className={type===item?"active":""} onClick={()=>setType(item)}>{item}</button>)}</div>
+    <section className="kpi-grid compact"><Kpi label={`Total de ${type}`} value={type === "Incompletos" ? "11" : "1.284"} detail="No período selecionado" /><Kpi label="Autorizadas" value="1.261" detail="98,2% dos documentos" tone="success" /><Kpi label="Canceladas" value="12" detail="0,9% dos documentos" tone="danger" /><Kpi label="Sem XML" value="11" detail="Requer acompanhamento" tone="warning" /></section>
+    <section className="panel vault-panel">
+      <div className="vault-toolbar"><div className="search-box"><select aria-label="Tipo de busca"><option>Número</option><option>Empresa</option><option>Participante</option></select><input aria-label="Buscar documentos" placeholder="Buscar no Cofre..." value={query} onChange={event=>setQuery(event.target.value)} /></div><div><button className="quiet-button" onClick={()=>onNotice("Filtros avançados abertos")}>⌄ Filtros avançados</button><button className="quiet-button" onClick={()=>setQuery("")}>Limpar</button></div><div className="vault-actions"><button className="quiet-button" onClick={()=>setSelected(filtered.map(item=>item.id))}>Selecionar página</button><button className="accent-button" onClick={()=>onNotice("Download fictício preparado")}>Baixar filtrados</button><button className="quiet-button" onClick={()=>onNotice("Relatório fictício gerado")}>Relatório</button></div></div>
+      {selected.length > 0 && <div className="batch-bar"><strong>{selected.length} documento(s) selecionado(s)</strong><button onClick={()=>onNotice("Tag fictícia aplicada")}>Aplicar tag</button><button onClick={()=>onNotice("Solicitação fictícia aberta com os documentos")}>Criar solicitação</button><button onClick={()=>setSelected([])}>Limpar seleção</button></div>}
+      <div className="data-table-wrap"><table className="data-table"><thead><tr><th><span className="sr-only">Selecionar</span></th><th>Número</th><th>Empresa</th><th>Emitente / prestador</th><th>Emissão</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>{filtered.map(item=><tr key={item.id} className={selected.includes(item.id)?"selected":""}><td><input type="checkbox" aria-label={`Selecionar documento ${item.number}`} checked={selected.includes(item.id)} onChange={()=>toggle(item.id)} /></td><td><strong>{item.number}</strong><code>{item.id}</code></td><td>{item.company}</td><td>{item.party}</td><td>{item.issued}</td><td>{item.value}</td><td><Status tone={item.tone}>{item.status}</Status></td><td><button aria-label={`Abrir ações do documento ${item.number}`} onClick={()=>onNotice(`Ações de ${item.id} abertas`)}>•••</button></td></tr>)}</tbody></table>{filtered.length===0&&<div className="empty-state"><span>⌕</span><strong>Nenhum documento encontrado</strong><p>Altere a busca para ver os dados fictícios.</p></div>}</div>
+    </section>
+  </>;
+}
+
+const calendarViews = ["Mês", "Semana", "Dia", "Agenda"] as const;
+type CalendarView = (typeof calendarViews)[number];
+
+function CalendarDemo({ view, setView, onNotice }: { view: CalendarView; setView: (view: CalendarView) => void; onNotice: (message: string) => void }) {
+  return <>
+    <div className="calendar-toolbar"><div className="month-nav"><button aria-label="Mês anterior">‹</button><button>Hoje</button><button aria-label="Próximo mês">›</button></div><div className="view-switch" role="tablist" aria-label="Visualização do calendário">{calendarViews.map(item=><button key={item} role="tab" aria-selected={view===item} className={view===item?"active":""} onClick={()=>setView(item)}>{item}</button>)}</div><button className="quiet-button" onClick={()=>onNotice("Filtros do calendário abertos")}>☷ Filtrar</button></div>
+    <div className="calendar-legend"><span><i className="tone-info" />Reuniões</span><span><i className="tone-success" />Compromissos</span><span><i className="tone-warning" />Central de Operações</span><span><i className="tone-neutral" />Pessoais</span></div>
+    {view === "Mês" && <section className="calendar-layout"><article className="month-panel panel"><div className="weekdays">{["SEG","TER","QUA","QUI","SEX","SÁB","DOM"].map(day=><b key={day}>{day}</b>)}</div><div className="month-grid">{monthDays.map((item,index)=><button key={`${item.day}-${index}`} className={`${item.muted?"muted":""} ${item.day===3&&!item.muted?"selected":""}`} onClick={()=>item.events?.[0]&&onNotice(item.events[0].label)}><span>{item.day}</span>{item.events?.map(event=><small className={`event-chip ${event.tone}`} key={event.label}>{event.label}</small>)}</button>)}</div></article><aside className="day-peek panel"><span>SEGUNDA-FEIRA</span><h2>3 de agosto</h2><div className="peek-event info"><time>09:30</time><div><strong>Reunião de alinhamento</strong><p>Sala Horizonte · Equipe interna</p></div></div><div className="peek-event warning"><time>14:00</time><div><strong>Revisar tarefas da semana</strong><p>Central de Operações</p></div></div><button className="accent-button" onClick={()=>onNotice("Compromisso demonstrativo criado")}>+ Adicionar compromisso</button></aside></section>}
+    {view === "Semana" && <section className="time-grid panel"><div className="time-head"><span>GMT-3</span>{["SEG 03","TER 04","QUA 05","QUI 06","SEX 07"].map(day=><b key={day}>{day}</b>)}</div><div className="time-body"><div className="hours">{["08:00","10:00","12:00","14:00","16:00","18:00"].map(hour=><span key={hour}>{hour}</span>)}</div><div className="week-canvas"><button className="calendar-block info" style={{gridColumn:1,gridRow:"2 / span 2"}} onClick={()=>onNotice("Reunião de alinhamento aberta")}>09:30<br/><b>Alinhamento</b></button><button className="calendar-block warning" style={{gridColumn:3,gridRow:"4 / span 2"}} onClick={()=>onNotice("Prazo SOL-1048 aberto")}>14:00<br/><b>Prazo SOL-1048</b></button><button className="calendar-block success" style={{gridColumn:5,gridRow:"3 / span 2"}}>11:00<br/><b>Revisão mensal</b></button></div></div></section>}
+    {view === "Dia" && <section className="day-view panel"><div className="day-title"><span>SEGUNDA-FEIRA</span><h2>3 de agosto de 2026</h2></div>{["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"].map(hour=><div className="day-hour" key={hour}><time>{hour}</time>{hour==="09:00"&&<button className="day-event info" onClick={()=>onNotice("Reunião de alinhamento aberta")}><b>09:30 · Reunião de alinhamento</b><span>Sala Horizonte · 4 participantes</span></button>}{hour==="14:00"&&<button className="day-event warning"><b>14:00 · Revisar tarefas da semana</b><span>Central de Operações</span></button>}</div>)}</section>}
+    {view === "Agenda" && <section className="agenda-view">{[["03","SEGUNDA","Reunião de alinhamento","09:30 – 10:30","info"],["05","QUARTA","Prazo · SOL-1048","Até 17:00","warning"],["07","SEXTA","Revisão mensal","11:00 – 12:00","success"],["10","SEGUNDA","Entrega ao cliente","14:30 – 15:00","info"]].map(row=><article className="agenda-day panel" key={row[0]}><div className="agenda-date"><b>{row[0]}</b><span>{row[1]}</span></div><i className={`tone-${row[4]}`} /><div><strong>{row[2]}</strong><p>{row[3]} · Dados demonstrativos</p></div><button onClick={()=>onNotice(`${row[2]} aberto`)}>Abrir →</button></article>)}</section>}
+  </>;
+}
+
+function Companies({ onNotice }: { onNotice: (message: string) => void }) {
+  const [query,setQuery]=useState("");
+  const filtered=companies.filter(company=>`${company.name} ${company.code} ${company.segment}`.toLowerCase().includes(query.toLowerCase()));
+  return <><section className="company-summary"><Kpi label="Empresas ativas" value="24" detail="Carteira inteiramente fictícia" tone="success" /><Kpi label="Em onboarding" value="2" detail="Fluxos demonstrativos" tone="warning" /><Kpi label="Solicitações abertas" value="10" detail="Em quatro empresas demo" tone="info" /></section><section className="panel companies-panel"><div className="directory-toolbar"><div><h2>Diretório de empresas</h2><p>Cadastros sintéticos para explorar a navegação</p></div><input aria-label="Buscar empresas" placeholder="Buscar por nome, código ou segmento..." value={query} onChange={event=>setQuery(event.target.value)} /></div><div className="company-grid">{filtered.map((company,index)=><button className="company-card" key={company.code} onClick={()=>onNotice(`${company.name} aberta em modo demonstrativo`)}><div className={`company-logo logo-${index+1}`}>{company.name[0]}</div><div className="company-main"><span><code>{company.code}</code><Status tone={company.tone}>{company.tone==="success"?"Ativa":"Onboarding"}</Status></span><h3>{company.name}</h3><p>{company.segment}</p><div className="module-chips">{company.modules.map(module=><small key={module}>{module}</small>)}</div></div><div className="company-open"><b>{company.open}</b><span>pendências</span><em>→</em></div></button>)}</div></section></>;
+}
+
+const technologyGroups = [
+  { title: "Frontend", description: "Interface, estado e visualização", items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS 4", "TanStack Query", "Recharts", "Base UI", "Radix UI", "Motion", "Lucide"] },
+  { title: "Backend", description: "APIs, regras e processamento", items: ["Python", "FastAPI", "SQLAlchemy", "Pydantic", "Alembic", "Celery", "APIs REST", "Workers assíncronos"] },
+  { title: "Dados e infraestrutura", description: "Persistência e operação", items: ["PostgreSQL", "Redis", "Docker", "Caddy", "Cloudflare Tunnel", "GitHub Actions", "Windows Server", "PowerShell"] },
+  { title: "Integrações e documentos", description: "Interoperabilidade do produto", items: ["XML DF-e", "PDF", "Excel / XLSX", "ODBC", "Certificados A1", "OAuth 2.0", "SMTP", "Webhooks"] },
+  { title: "Qualidade e segurança", description: "Práticas aplicadas ao projeto", items: ["RBAC", "Multi-tenant", "Testes automatizados", "Auditoria", "Criptografia", "Validação de schemas", "CI/CD", "Revisão por pull request"] },
+];
+
+function Technologies() {
+  return <section className="tech-layout"><article className="tech-intro panel"><span>ARQUITETURA DE PRODUTO</span><h2>Uma stack completa, aplicada a problemas reais.</h2><p>Esta lista apresenta tecnologias e práticas do projeto original em nível de portfólio. Não inclui endereços, credenciais, configurações, código ou detalhes privados de infraestrutura.</p><div className="tech-stats"><div><b>5</b><span>camadas apresentadas</span></div><div><b>30+</b><span>tecnologias e práticas</span></div><div><b>0</b><span>dados internos publicados</span></div></div></article><div className="tech-groups">{technologyGroups.map((group,index)=><article className="panel tech-card" key={group.title}><div className={`tech-icon tech-${index+1}`}>{String(index+1).padStart(2,"0")}</div><div><h3>{group.title}</h3><p>{group.description}</p></div><ul>{group.items.map(item=><li key={item}>{item}</li>)}</ul></article>)}</div></section>;
+}
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<ViewName>("Visão geral");
-  const [period, setPeriod] = useState("Últimos 30 dias");
+  const [activeModule, setActiveModule] = useState<ModuleName>("Visão geral");
+  const [operationsTab, setOperationsTab] = useState<OperationsTab>("Quadros");
+  const [cofreType, setCofreType] = useState<CofreType>("NF-e");
+  const [calendarView, setCalendarView] = useState<CalendarView>("Mês");
   const [notice, setNotice] = useState<string | null>(null);
-  const view = dashboardViews[activeView];
+  const meta = moduleMeta[activeModule];
+  const actionLabel = useMemo(() => meta.action, [meta]);
 
   const showNotice = (message: string) => {
     setNotice(message);
-    window.setTimeout(() => setNotice(null), 3200);
+    window.setTimeout(() => setNotice(null), 2800);
   };
 
-  const renderNavButton = (name: ViewName) => (
-    <button key={name} className={activeView === name ? "active" : ""} aria-pressed={activeView === name} onClick={() => setActiveView(name)}>
-      <span className="nav-icon" aria-hidden="true">{icons[name]}</span>{name}
-    </button>
-  );
+  const selectModule = (module: ModuleName) => {
+    setActiveModule(module);
+  };
 
-  return (
-    <div className="app-shell">
-      <aside>
-        <a className="brand" href="#top" aria-label="NexaFlow Demo — início">
-          <span className="brand-mark">N</span>
-          <span><strong>NexaFlow</strong><small>Portfolio demo</small></span>
-        </a>
-        <nav aria-label="Seções da demonstração">
-          <p>Workspace</p>
-          {workspaceViews.map(renderNavButton)}
-          <p>Gestão</p>
-          {managementViews.map(renderNavButton)}
-        </nav>
-        <div className="aside-bottom">
-          <div className="demo-user"><span>YD</span><div><strong>Usuário Demo</strong><small>Acesso fictício</small></div></div>
-          <a href="https://ylaros.github.io/">← Voltar ao portfólio</a>
-        </div>
-      </aside>
+  const navButton = (module: ModuleName) => <button key={module} className={activeModule===module?"active":""} aria-current={activeModule===module?"page":undefined} onClick={()=>selectModule(module)}><span aria-hidden="true">{navIcons[module]}</span>{module}</button>;
 
-      <main id="top">
-        <div className="privacy-banner" role="note"><span>Ambiente demonstrativo</span>Dados 100% sintéticos · não representa o sistema real</div>
-        <header>
-          <div><p>{view.eyebrow}</p><h1>{activeView}</h1></div>
-          <div className="header-actions">
-            <label><span className="sr-only">Período do painel</span><select value={period} onChange={(event) => setPeriod(event.target.value)}><option>Últimos 7 dias</option><option>Últimos 30 dias</option><option>Este trimestre</option></select></label>
-            <button className="primary-action" onClick={() => showNotice(view.notice)}>{view.actionLabel}</button>
-          </div>
-        </header>
-
-        <section className="metric-grid" aria-label={`Indicadores de ${activeView} — ${period}`}>
-          {view.metrics.map((metric) => (
-            <article key={metric.label}><div><span className={`metric-icon ${metric.tone}`}>{metric.icon}</span><small>{metric.label}</small></div><strong>{metric.value}</strong><p className={`metric-trend ${metric.noteTone}`}>{metric.note}</p></article>
-          ))}
-        </section>
-
-        <section className="dashboard-grid">
-          <article className="chart-card card">
-            <div className="card-head"><div><span>{view.chart.title}</span><small>{view.chart.subtitle}</small></div><button onClick={() => showNotice(`Detalhes de ${view.chart.title.toLowerCase()} abertos`)} aria-label={`Abrir detalhes de ${view.chart.title}`}>•••</button></div>
-            <div className="chart-area"><div className="y-labels"><span>120</span><span>80</span><span>40</span><span>0</span></div><div className="bars" aria-label={`Gráfico: ${view.chart.subtitle}`}>
-              {view.chart.bars.map((height, index) => <div key={`${activeView}-${index}`}><span style={{ height: `${height}%` }} /><small>{index + 1}</small></div>)}
-            </div></div>
-            <div className="legend"><span><i className="legend-current" />{view.chart.legend}</span><span><i />{view.chart.reference}</span></div>
-          </article>
-
-          <article className="health-card card">
-            <div className="card-head"><div><span>{view.health.title}</span><small>{view.health.subtitle}</small></div><button onClick={() => showNotice(`Detalhes de ${view.health.title.toLowerCase()} abertos`)} aria-label={`Abrir detalhes de ${view.health.title}`}>•••</button></div>
-            <div className="donut" style={{ "--donut-value": `${view.health.percent}%` } as CSSProperties} aria-label={`${view.health.center} ${view.health.label}`}><div><strong>{view.health.center}</strong><small>{view.health.label}</small></div></div>
-            <div className="health-list">{view.health.items.map((item) => <div key={item.label}><span><i className={`dot ${item.tone}`} />{item.label}</span><b>{item.value}</b></div>)}</div>
-          </article>
-        </section>
-
-        <section className="table-card card">
-          <div className="card-head"><div><span>{view.table.title}</span><small>{view.table.subtitle}</small></div><button onClick={() => showNotice(`Lista completa de ${view.table.title.toLowerCase()} aberta`)}>Ver todas →</button></div>
-          <div className="table-wrap"><table><thead><tr><th>{view.table.columns[0]}</th><th>{view.table.columns[1]}</th><th>{view.table.columns[2]}</th><th>Status</th><th>Progresso</th></tr></thead><tbody>
-            {view.table.rows.map((row, index) => <tr key={`${activeView}-${row.code}-${index}`}><td><span className={`company-avatar avatar-${index + 1}`}>{row.name[0]}</span><strong>{row.name}</strong></td><td><code>{row.code}</code></td><td>{row.task}</td><td><span className={`status ${row.tone}`}>{row.status}</span></td><td><div className="progress"><span style={{ width: `${row.progress}%` }} /></div><small>{row.progress}%</small></td></tr>)}
-          </tbody></table></div>
-        </section>
-
-        <footer><p>NexaFlow é uma interface fictícia criada exclusivamente para portfólio.</p><span>Sem conexão com dados, APIs ou infraestrutura reais.</span></footer>
-        {notice && <div className="toast" role="status"><b>{notice}</b><span>Nenhum arquivo, integração ou dado real foi utilizado.</span></div>}
-      </main>
-    </div>
-  );
+  return <div className="app-shell">
+    <aside className="sidebar">
+      <a className="brand" href="#top" aria-label="NexaFlow Demo — início"><span className="brand-mark">N</span><span><strong>NexaFlow</strong><small>DEMONSTRAÇÃO FICTÍCIA</small></span></a>
+      <button className="tenant"><span><small>Empresa</small><strong>100 · AURORA COMÉRCIO DEMO</strong></span><b>⌄</b></button>
+      <label className="sidebar-search"><span aria-hidden="true">⌕</span><input aria-label="Buscar módulos" placeholder="Buscar módulos..." /></label>
+      <nav aria-label="Seções da demonstração"><p>Principal</p>{productModules.slice(0,3).map(navButton)}<p>Módulos</p>{productModules.slice(3).map(navButton)}<p>Portfólio</p>{portfolioModules.map(navButton)}</nav>
+      <div className="sidebar-bottom"><div className="demo-user"><span>AD</span><div><strong>Aloyr Demo</strong><small>Acesso fictício</small></div></div><a href="https://ylaros.github.io/">← Voltar ao portfólio</a></div>
+    </aside>
+    <main id="top">
+      <div className="privacy-banner" role="note"><span>AMBIENTE DEMONSTRATIVO</span><b>Dados 100% sintéticos</b> · interface autoral inspirada apenas nos fluxos do produto</div>
+      <header className="page-header"><div><p>{meta.eyebrow}</p><h1>{activeModule}</h1><span>{meta.description}</span></div><div className="header-actions"><button className="period-button">Jul 2026 <span>⌄</span></button>{actionLabel&&<button className="accent-button" onClick={()=>showNotice(`${actionLabel} — ação apenas demonstrativa`)}>+ {actionLabel}</button>}</div></header>
+      <div className="module-content">
+        {activeModule==="Visão geral"&&<Overview />}
+        {activeModule==="Central de Operações"&&<Operations tab={operationsTab} setTab={setOperationsTab} onNotice={showNotice} />}
+        {activeModule==="Cofre"&&<Vault type={cofreType} setType={setCofreType} onNotice={showNotice} />}
+        {activeModule==="Calendário"&&<CalendarDemo view={calendarView} setView={setCalendarView} onNotice={showNotice} />}
+        {activeModule==="Empresas"&&<Companies onNotice={showNotice} />}
+        {activeModule==="Tecnologias"&&<Technologies />}
+      </div>
+      <footer className="site-footer"><span>NexaFlow é uma demonstração fictícia criada para o portfólio de Aloyr.</span><span>Sem conexão com dados, APIs ou infraestrutura reais.</span></footer>
+      {notice&&<div className="toast" role="status"><b>{notice}</b><span>Nenhuma operação real foi executada.</span></div>}
+    </main>
+  </div>;
 }
