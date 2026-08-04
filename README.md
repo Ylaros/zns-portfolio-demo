@@ -6,7 +6,10 @@ As áreas disponíveis preservam o sentido dos fluxos do produto, mas foram impl
 
 - **Visão geral:** indicadores, atividade, compromissos e alertas;
 - **Central de Operações:** dashboard, quadro, solicitações, pendências e cronograma;
-- **Cofre:** tipos de documento, indicadores, filtros, seleção e listagem;
+- **Fiscal:** painel do período, classificador assistido com confiança, alertas e decisão humana, além do Cofre DF-e;
+- **Contábil:** balancete, análise por classificação, conciliação e pendências de fechamento;
+- **Trabalhista:** indicadores de folha, comparações, funcionários fictícios e auditorias preventivas;
+- **Inteligência de Mercado:** CNAE, recorte regional, prontidão cadastral e benchmark anonimizado;
 - **Calendário:** visões de mês, semana, dia e agenda;
 - **Empresas:** diretório pesquisável de cadastros demonstrativos;
 - **Tecnologias:** ficha técnica pública da arquitetura e das práticas do projeto.

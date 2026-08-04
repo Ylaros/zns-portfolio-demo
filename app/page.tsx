@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-const productModules = ["Visão geral", "Central de Operações", "Cofre", "Calendário", "Empresas"] as const;
+const productModules = ["Visão geral", "Central de Operações", "Fiscal", "Contábil", "Trabalhista", "Inteligência de Mercado", "Calendário", "Empresas"] as const;
 const portfolioModules = ["Tecnologias"] as const;
 const modules = [...productModules, ...portfolioModules] as const;
 type ModuleName = (typeof modules)[number];
@@ -20,10 +20,21 @@ const moduleMeta: Record<ModuleName, { eyebrow: string; description: string; act
     description: "Organize demandas, responsáveis, prazos e entregas em um único fluxo.",
     action: "Nova solicitação",
   },
-  Cofre: {
-    eyebrow: "Documentos fiscais",
-    description: "Consulte documentos por tipo, período, empresa e situação documental.",
-    action: "Importar XML demo",
+  Fiscal: {
+    eyebrow: "Documentos e escrituração",
+    description: "Classificação assistida, conferência tributária e Cofre DF-e em um único fluxo.",
+  },
+  Contábil: {
+    eyebrow: "Fechamento e qualidade",
+    description: "Balancete, composição de saldos e conciliação com foco no que exige revisão.",
+  },
+  Trabalhista: {
+    eyebrow: "Folha e pessoas",
+    description: "Indicadores de folha, movimentações e auditorias preventivas da carteira.",
+  },
+  "Inteligência de Mercado": {
+    eyebrow: "Contexto setorial",
+    description: "CNAE, território, prontidão cadastral e benchmarks agregados com privacidade.",
   },
   Calendário: {
     eyebrow: "Agenda da equipe",
@@ -44,7 +55,10 @@ const moduleMeta: Record<ModuleName, { eyebrow: string; description: string; act
 const navIcons: Record<ModuleName, string> = {
   "Visão geral": "⌂",
   "Central de Operações": "◎",
-  Cofre: "▱",
+  Fiscal: "▱",
+  Contábil: "≋",
+  Trabalhista: "♙",
+  "Inteligência de Mercado": "◉",
   Calendário: "□",
   Empresas: "◇",
   Tecnologias: "⌘",
@@ -245,6 +259,89 @@ function Vault({ type, setType, onNotice }: { type: CofreType; setType: (type: C
   </>;
 }
 
+const fiscalTabs = ["Painel fiscal", "Classificador", "Cofre DF-e"] as const;
+type FiscalTab = (typeof fiscalTabs)[number];
+type FiscalInvoice = { id: string; number: string; company: string; supplier: string; value: string; items: number; confidence: number; alerts: number; status: string; tone: Tone };
+
+const fiscalInvoices: FiscalInvoice[] = [
+  { id: "NFX-8042", number: "000.080.420", company: "Aurora Comércio Demo", supplier: "Atlas Alimentos Sintéticos", value: "R$ 4.282,98", items: 8, confidence: 61, alerts: 3, status: "Com alertas", tone: "warning" },
+  { id: "NFX-7991", number: "000.079.913", company: "Orbe Indústria Fictícia", supplier: "Prisma Insumos Lab", value: "R$ 19.039,66", items: 5, confidence: 96, alerts: 0, status: "Em análise", tone: "info" },
+  { id: "NFX-7860", number: "000.078.604", company: "Vértice Mercado Teste", supplier: "Rota Comercial Demo", value: "R$ 987,63", items: 4, confidence: 58, alerts: 4, status: "Com alertas", tone: "danger" },
+  { id: "NFX-7754", number: "000.077.548", company: "Horizonte Serviços Lab", supplier: "Norte Soluções Fictícias", value: "R$ 715,95", items: 3, confidence: 88, alerts: 1, status: "Em análise", tone: "info" },
+];
+
+const classificationItems = [
+  { id: "IT-01", product: "Chocolate em pó 400 g", code: "18069000", issued: "5405 · CST 60", suggestion: "Grupo 40101 · CFOP 1401", detail: "Compra para industrialização com ST", confidence: 61, alerts: 3 },
+  { id: "IT-02", product: "Açúcar cristal 1 kg", code: "17019900", issued: "5102 · CST 20", suggestion: "Grupo 10101 · CFOP 1101", detail: "Compra para industrialização", confidence: 92, alerts: 0 },
+  { id: "IT-03", product: "Café torrado 500 g", code: "09012100", issued: "5102 · CST 20", suggestion: "Grupo 10101 · CFOP 1101", detail: "Histórico validado para o fornecedor", confidence: 87, alerts: 1 },
+  { id: "IT-04", product: "Creme culinário 200 g", code: "04015021", issued: "5405 · CST 60", suggestion: "Sem sugestão segura", detail: "Revisão manual obrigatória", confidence: 0, alerts: 1 },
+];
+
+function ModuleTabs<T extends string>({ items, active, onChange, label }: { items: readonly T[]; active: T; onChange: (item: T) => void; label: string }) {
+  return <div className="module-tabs" role="tablist" aria-label={label}>{items.map(item=><button key={item} role="tab" aria-selected={active===item} className={active===item?"active":""} onClick={()=>onChange(item)}>{item}</button>)}</div>;
+}
+
+function FiscalModule({ type, setType, onNotice }: { type: CofreType; setType: (type: CofreType) => void; onNotice: (message: string) => void }) {
+  const [tab,setTab]=useState<FiscalTab>("Classificador");
+  const [invoice,setInvoice]=useState(fiscalInvoices[0]);
+  const [approved,setApproved]=useState<string[]>([]);
+  const approve=(id:string)=>{setApproved(items=>items.includes(id)?items:[...items,id]);onNotice("Classificação aprovada somente nesta demonstração");};
+  return <>
+    <ModuleTabs items={fiscalTabs} active={tab} onChange={setTab} label="Áreas do módulo fiscal" />
+    {tab==="Painel fiscal"&&<section className="module-stack">
+      <div className="kpi-grid compact"><Kpi label="Notas no período" value="1.284" detail="24 empresas com movimento"/><Kpi label="Não analisadas" value="13" detail="Fila inicial do classificador" tone="warning"/><Kpi label="Com alertas" value="82" detail="Exigem revisão humana" tone="danger"/><Kpi label="Exportadas" value="1.167" detail="91% do movimento" tone="success"/></div>
+      <div className="overview-grid"><article className="panel"><div className="panel-head"><div><h2>Esteira de classificação</h2><p>Do XML capturado à escrituração validada</p></div><Status tone="info">Jul 2026</Status></div><div className="pipeline">{[["Capturadas","1.284","100%"],["Classificadas","1.271","99%"],["Conferidas","1.204","94%"],["Exportadas","1.167","91%"]].map((row,index)=><div key={row[0]}><span>{index+1}</span><div><strong>{row[1]}</strong><small>{row[0]}</small><i><em style={{width:row[2]}}/></i></div></div>)}</div></article><article className="panel"><div className="panel-head"><div><h2>Onde agir primeiro</h2><p>Sinais que pedem decisão</p></div></div><div className="attention-list"><button onClick={()=>setTab("Classificador")}><span className="alert-icon danger">!</span><div><b>4 notas com baixa confiança</b><small>Revisar regra e tributação sugerida</small></div><em>→</em></button><button onClick={()=>setTab("Cofre DF-e")}><span className="alert-icon warning">!</span><div><b>11 documentos sem XML</b><small>Acompanhar captura e manifestação</small></div><em>→</em></button></div></article></div>
+    </section>}
+    {tab==="Classificador"&&<section className="classifier-layout">
+      <article className="panel classifier-queue"><div className="classifier-title"><div><span>FILA DE ENTRADAS</span><h2>Notas para classificar</h2><p>Sugestões combinam histórico, cadastro e regras fiscais.</p></div><button className="quiet-button" onClick={()=>onNotice("Classificação em lote simulada")}>Classificar pendentes</button></div><div className="invoice-list">{fiscalInvoices.map(item=><button key={item.id} className={invoice.id===item.id?"active":""} onClick={()=>{setInvoice(item);setApproved([]);}}><span><code>{item.id}</code><Status tone={item.tone}>{item.status}</Status></span><strong>NF-e {item.number}</strong><p>{item.supplier}</p><small>{item.company} · {item.value}</small><footer><b>{item.items} itens</b><em className={item.confidence<70?"low":""}>{item.confidence}% confiança</em><i>{item.alerts} alertas</i></footer></button>)}</div></article>
+      <article className="panel classifier-detail"><div className="classification-head"><div><span>ANÁLISE DA NOTA</span><h2>NF-e {invoice.number}</h2><p>{invoice.supplier} · {invoice.company}</p></div><div><Status tone={invoice.tone}>{invoice.status}</Status><b>{invoice.value}</b></div></div><div className="classification-summary"><span><small>Itens</small><b>{classificationItems.length}</b></span><span><small>Confiança mínima</small><b>{invoice.confidence}%</b></span><span><small>Alertas</small><b>{invoice.alerts}</b></span><button className="accent-button" onClick={()=>onNotice("Escrituração demo preparada para exportação")}>Preparar escrituração</button></div><div className="classification-table"><div className="classification-row header"><span>Produto / tributação</span><span>Sugestão do motor</span><span>Confiança</span><span>Decisão</span></div>{classificationItems.map(item=><div className={`classification-row ${approved.includes(item.id)?"approved":""}`} key={item.id}><div><code>{item.id}</code><strong>{item.product}</strong><small>NCM {item.code} · emitido {item.issued}</small></div><div><strong>{item.suggestion}</strong><small>{item.detail}</small>{item.alerts>0&&<em>{item.alerts} alerta(s) fiscal(is)</em>}</div><div><b className={`confidence ${item.confidence<70?"low":item.confidence<90?"mid":"high"}`}>{item.confidence?`${item.confidence}%`:"—"}</b><small>{item.confidence>=90?"alta":item.confidence>=70?"revisar":"obrigatória"}</small></div><div>{approved.includes(item.id)?<Status tone="success">Aprovada</Status>:<><button className="mini-action approve" onClick={()=>approve(item.id)}>Aprovar</button><button className="mini-action" onClick={()=>onNotice(`Editor de grupo e CFOP aberto para ${item.id}`)}>Ajustar</button></>}</div></div>)}</div></article>
+    </section>}
+    {tab==="Cofre DF-e"&&<Vault type={type} setType={setType} onNotice={onNotice}/>}
+  </>;
+}
+
+const accountingTabs=["Balancete","Análise por classificação","Conciliação","Pendências"] as const;
+type AccountingTab=(typeof accountingTabs)[number];
+
+function AccountingModule({onNotice}:{onNotice:(message:string)=>void}){
+  const [tab,setTab]=useState<AccountingTab>("Balancete");
+  return <><ModuleTabs items={accountingTabs} active={tab} onChange={setTab} label="Áreas do módulo contábil"/>
+    {tab==="Balancete"&&<section className="module-stack"><div className="kpi-grid compact"><Kpi label="Ativo" value="R$ 1,84 mi" detail="Saldo final sintético"/><Kpi label="Passivo" value="R$ 1,12 mi" detail="61% do ativo" tone="warning"/><Kpi label="Resultado" value="R$ 184 mil" detail="Margem demonstrativa de 14,2%" tone="success"/><Kpi label="Contas a revisar" value="7" detail="3 com variação relevante" tone="danger"/></div><div className="accounting-grid"><article className="panel"><div className="panel-head"><div><h2>Composição patrimonial</h2><p>Comparativo sintético entre saldo atual e mês anterior</p></div><button className="quiet-button" onClick={()=>onNotice("Balancete fictício exportado")}>Exportar</button></div><div className="ledger-bars">{[["Disponibilidades","R$ 428 mil",72,"+8,4%"],["Clientes","R$ 612 mil",94,"+3,1%"],["Estoques","R$ 356 mil",58,"−2,7%"],["Fornecedores","R$ 482 mil",78,"+6,2%"],["Empréstimos","R$ 210 mil",36,"−4,5%"]].map(row=><div key={row[0]}><span><b>{row[0]}</b><small>{row[1]} · {row[3]}</small></span><i><em style={{width:`${row[2]}%`}}/></i></div>)}</div></article><article className="panel"><div className="panel-head"><div><h2>Fechamento</h2><p>Qualidade do período</p></div><Status tone="warning">Em revisão</Status></div><div className="close-score"><div><b>86%</b><span>pronto</span></div></div><ul className="summary-list"><li><span><i className="tone-success"/>Contas conciliadas</span><b>42</b></li><li><span><i className="tone-warning"/>Composição pendente</span><b>5</b></li><li><span><i className="tone-danger"/>Variação atípica</span><b>2</b></li></ul></article></div></section>}
+    {tab==="Análise por classificação"&&<section className="panel insight-table"><div className="panel-head"><div><h2>Análise por classificação de contas</h2><p>Variações relevantes destacadas automaticamente</p></div><button className="quiet-button" onClick={()=>onNotice("Filtros contábeis abertos")}>Filtros</button></div><table className="data-table"><thead><tr><th>Classificação</th><th>Conta</th><th>Saldo atual</th><th>Mês anterior</th><th>Variação</th><th>Sinal</th></tr></thead><tbody>{[["1.1.2","Clientes nacionais","R$ 612.480","R$ 594.030","+3,1%","Dentro do padrão","success"],["1.1.3","Estoques de mercadorias","R$ 356.120","R$ 366.010","−2,7%","Dentro do padrão","success"],["2.1.1","Fornecedores","R$ 482.330","R$ 454.020","+6,2%","Revisar composição","warning"],["3.1.1","Receita operacional","R$ 1.294.800","R$ 1.108.400","+16,8%","Variação atípica","danger"]].map(row=><tr key={row[0]}><td><code>{row[0]}</code></td><td><strong>{row[1]}</strong></td><td>{row[2]}</td><td>{row[3]}</td><td>{row[4]}</td><td><Status tone={row[6] as Tone}>{row[5]}</Status></td></tr>)}</tbody></table></section>}
+    {tab==="Conciliação"&&<section className="reconciliation-grid">{[["Banco Horizonte Demo","98%","2 lançamentos","success"],["Caixa operacional","92%","5 lançamentos","warning"],["Cartões a receber","84%","12 lançamentos","danger"]].map(row=><article className="panel reconciliation-card" key={row[0]}><div><span className="account-mark">≋</span><Status tone={row[3] as Tone}>{row[1]} conciliado</Status></div><h2>{row[0]}</h2><p>{row[2]} ainda sem correspondência automática.</p><button className="quiet-button" onClick={()=>onNotice(`Conciliação de ${row[0]} aberta`)}>Conciliar →</button></article>)}</section>}
+    {tab==="Pendências"&&<section className="panel attention-table"><div className="panel-head"><div><h2>Pendências do fechamento</h2><p>Itens priorizados por impacto e prazo</p></div></div>{[["CTA-019","Compor saldo de fornecedores","Alto","Hoje","danger"],["CTA-024","Revisar variação de receita","Médio","Amanhã","warning"],["CTA-031","Vincular lançamento bancário","Baixo","07 ago","info"]].map(row=><button key={row[0]} onClick={()=>onNotice(`${row[0]} aberto em modo demonstrativo`)}><code>{row[0]}</code><span><b>{row[1]}</b><small>Responsável: Contabilidade Demo</small></span><Status tone={row[4] as Tone}>{row[2]}</Status><time>{row[3]}</time><em>→</em></button>)}</section>}
+  </>;
+}
+
+const laborTabs=["Dashboard","Comparações","Funcionários","Auditoria"] as const;
+type LaborTab=(typeof laborTabs)[number];
+
+function LaborModule({onNotice}:{onNotice:(message:string)=>void}){
+  const [tab,setTab]=useState<LaborTab>("Dashboard");
+  return <><ModuleTabs items={laborTabs} active={tab} onChange={setTab} label="Áreas do módulo trabalhista"/>
+    {tab==="Dashboard"&&<section className="module-stack"><div className="kpi-grid compact"><Kpi label="Funcionários ativos" value="248" detail="Em 18 empresas demo"/><Kpi label="Admissões" value="12" detail="+3 vs. mês anterior" tone="success"/><Kpi label="Férias próximas" value="9" detail="Próximos 30 dias" tone="warning"/><Kpi label="Alertas de folha" value="6" detail="2 de maior impacto" tone="danger"/></div><div className="overview-grid"><article className="panel"><div className="panel-head"><div><h2>Evolução da folha</h2><p>Valores agregados e inteiramente sintéticos</p></div><Status tone="success">+2,4%</Status></div><div className="payroll-chart">{[52,58,55,63,61,68,72,70,76,81,78,84].map((h,i)=><div key={i}><span style={{height:`${h}%`}}/><small>{["A","S","O","N","D","J","F","M","A","M","J","J"][i]}</small></div>)}</div></article><article className="panel"><div className="panel-head"><div><h2>Movimentações</h2><p>Eventos do período</p></div></div><div className="movement-list">{[["Admissões","12","success"],["Desligamentos","5","danger"],["Férias","9","warning"],["Afastamentos","3","info"]].map(row=><div key={row[0]}><i className={`tone-${row[2]}`}/><span><b>{row[0]}</b><small>Julho de 2026</small></span><strong>{row[1]}</strong></div>)}</div></article></div></section>}
+    {tab==="Comparações"&&<section className="panel comparison-panel"><div className="panel-head"><div><h2>Comparação mensal da folha</h2><p>Variações por empresa e rubrica</p></div><button className="quiet-button" onClick={()=>onNotice("Relatório comparativo fictício gerado")}>Gerar relatório</button></div><div className="comparison-legend"><span><i className="tone-neutral"/>Jun 2026</span><span><i className="tone-info"/>Jul 2026</span></div>{[["Salários","R$ 842 mil","R$ 861 mil",68,72,"+2,3%"],["Encargos","R$ 284 mil","R$ 291 mil",42,45,"+2,5%"],["Benefícios","R$ 119 mil","R$ 128 mil",26,31,"+7,6%"],["Horas extras","R$ 38 mil","R$ 31 mil",19,14,"−18,4%"]].map(row=><div className="comparison-row" key={row[0]}><b>{row[0]}</b><div><span style={{width:`${row[3]}%`}}/><em style={{width:`${row[4]}%`}}/></div><small>{row[1]} → {row[2]}</small><strong>{row[5]}</strong></div>)}</section>}
+    {tab==="Funcionários"&&<section className="panel insight-table"><div className="panel-head"><div><h2>Funcionários</h2><p>Cadastros fictícios para demonstrar filtros e movimentações</p></div><input className="inline-search" aria-label="Buscar funcionários" placeholder="Buscar funcionário demo..."/></div><table className="data-table"><thead><tr><th>Funcionário</th><th>Empresa</th><th>Cargo</th><th>Admissão</th><th>Situação</th></tr></thead><tbody>{[["Ana Demo","Aurora Comércio Demo","Analista comercial","12/03/2024","Ativa","success"],["Bruno Lab","Orbe Indústria Fictícia","Operador de produção","08/11/2023","Férias programadas","warning"],["Carla Teste","Horizonte Serviços Lab","Assistente administrativa","21/01/2025","Ativa","success"],["Diego Fictício","Vértice Mercado Teste","Supervisor de loja","02/06/2022","Documentação pendente","danger"]].map(row=><tr key={row[0]}><td><strong>{row[0]}</strong></td><td>{row[1]}</td><td>{row[2]}</td><td>{row[3]}</td><td><Status tone={row[5] as Tone}>{row[4]}</Status></td></tr>)}</tbody></table></section>}
+    {tab==="Auditoria"&&<section className="audit-grid">{[["Jornada acima do limite","2 ocorrências","Revisar marcações e justificativas","danger"],["Férias próximas do limite","3 funcionários","Planejar períodos com as empresas","warning"],["Cadastro incompleto","1 funcionário","Documento admissional pendente","info"],["Variação salarial","0 ocorrências","Nenhuma divergência encontrada","success"]].map((row,index)=><article className="panel audit-card" key={row[0]}><span className={`audit-number tone-${row[3]}`}>{String(index+1).padStart(2,"0")}</span><div><h2>{row[0]}</h2><b>{row[1]}</b><p>{row[2]}</p></div><button onClick={()=>onNotice(`${row[0]} aberto em modo demonstrativo`)}>Analisar →</button></article>)}</section>}
+  </>;
+}
+
+const marketTabs=["Visão geral","Consulta CNPJ","Empresas / prontidão","Políticas e fontes"] as const;
+type MarketTab=(typeof marketTabs)[number];
+const readinessCompanies=[["Aurora Comércio Demo","47.89-0-99","Vale do Paraíba · SP",92,"Pronta"],["Orbe Indústria Fictícia","25.39-0-01","Sul de Minas · MG",78,"Revisar zona"],["Vértice Mercado Teste","47.12-1-00","Vale do Paraíba · SP",64,"CNAE secundário"],["Horizonte Serviços Lab","62.01-5-01","Campinas · SP",88,"Pronta"]] as const;
+
+function MarketIntelligence({onNotice}:{onNotice:(message:string)=>void}){
+  const [tab,setTab]=useState<MarketTab>("Visão geral");
+  const [query,setQuery]=useState("");
+  const filtered=readinessCompanies.filter(row=>`${row[0]} ${row[1]} ${row[2]}`.toLowerCase().includes(query.toLowerCase()));
+  return <><ModuleTabs items={marketTabs} active={tab} onChange={setTab} label="Áreas de inteligência de mercado"/>
+    {tab==="Visão geral"&&<section className="module-stack"><div className="market-badges"><span>✓ CNAE estruturado</span><span>✓ Zona de atuação</span><span>✓ Privacidade por amostra</span><span>◌ Snapshots demonstrativos</span></div><div className="market-hero"><article className="panel readiness-panel"><div className="panel-head"><div><h2>Prontidão da inteligência</h2><p>Qualidade da base antes de gerar comparativos</p></div><strong>82%</strong></div><div className="radar-demo" aria-label="Prontidão por dimensão">{[["CNAE",92],["Zona",78],["Benchmark",74],["Risco",85]].map(row=><div key={row[0]}><span><b>{row[0]}</b><small>{row[1]}%</small></span><i><em style={{width:`${row[1]}%`}}/></i></div>)}</div></article><article className="panel market-map"><div className="panel-head"><div><h2>Distribuição territorial</h2><p>Recortes regionais da carteira fictícia</p></div></div><div className="map-cloud"><span className="region r1">SP<b>58%</b></span><span className="region r2">MG<b>21%</b></span><span className="region r3">RJ<b>13%</b></span><span className="region r4">Outros<b>8%</b></span></div></article></div><div className="market-cards">{[["Risco CNAE","Score setorial","Sinais de abertura, sobrevivência e volatilidade por atividade.","warning"],["Mercado regional","Base pública","Escala por município, região, UF e Brasil.","info"],["Benchmark ético","Amostra protegida","Comparativos agregados sem expor empresas individuais.","success"],["Coerência cadastral","Cruzamento fiscal","CNAE declarado comparado a NCM, CFOP e comportamento.","neutral"]].map(row=><article className="panel" key={row[0]}><Status tone={row[3] as Tone}>{row[1]}</Status><h2>{row[0]}</h2><p>{row[2]}</p><button onClick={()=>onNotice(`${row[0]} aberto em modo demonstrativo`)}>Explorar →</button></article>)}</div></section>}
+    {tab==="Consulta CNPJ"&&<section className="lookup-layout"><article className="panel lookup-form"><span>CONSULTA DEMONSTRATIVA</span><h2>Contexto público de uma empresa</h2><p>Use apenas identificadores fictícios. Nenhuma consulta externa é realizada.</p><label>CNPJ demo<input value="12.345.678/0001-90" readOnly/></label><button className="accent-button" onClick={()=>onNotice("Consulta fictícia concluída")}>Consultar base demo</button></article><article className="panel lookup-result"><div><span className="company-seal">A</span><div><Status tone="success">Cadastro ativo</Status><h2>Alameda Varejo Demonstrativo Ltda.</h2><p>Identificador exclusivamente sintético</p></div></div><dl><div><dt>CNAE principal</dt><dd>47.89-0-99 · Comércio varejista</dd></div><div><dt>Município / UF</dt><dd>Vale Sereno · SP</dd></div><div><dt>Zona de atuação</dt><dd>Regional · raio estimado de 120 km</dd></div><div><dt>Maturidade cadastral</dt><dd><b>91%</b> · pronta para análise</dd></div></dl></article></section>}
+    {tab==="Empresas / prontidão"&&<section className="panel insight-table"><div className="panel-head"><div><h2>Prontidão cadastral da carteira</h2><p>Quanto melhor a base, mais confiáveis os recortes e benchmarks.</p></div><input className="inline-search" aria-label="Buscar na prontidão" placeholder="Empresa, cidade, UF ou CNAE..." value={query} onChange={event=>setQuery(event.target.value)}/></div><table className="data-table"><thead><tr><th>Empresa</th><th>CNAE principal</th><th>Zona</th><th>Prontidão</th><th>Situação</th><th>Ação</th></tr></thead><tbody>{filtered.map(row=><tr key={row[0]}><td><strong>{row[0]}</strong></td><td><code>{row[1]}</code></td><td>{row[2]}</td><td><div className="readiness-cell"><i><em style={{width:`${row[3]}%`}}/></i><b>{row[3]}%</b></div></td><td><Status tone={row[3]>=85?"success":row[3]>=70?"warning":"danger"}>{row[4]}</Status></td><td><button className="table-action" onClick={()=>onNotice(`${row[0]} aberta na prontidão`)}>Abrir →</button></td></tr>)}</tbody></table></section>}
+    {tab==="Políticas e fontes"&&<section className="policy-grid">{[["Privacidade por amostra","Nenhum benchmark é exibido abaixo da quantidade mínima de empresas do recorte.","01"],["Anonimização","Indicadores agregados não revelam nomes, valores individuais ou posição de uma empresa.","02"],["Fontes públicas","CNAE e contexto territorial são representados por dados fictícios nesta demonstração.","03"],["Rastreabilidade","Cada snapshot registra período, fonte e critérios utilizados para permitir auditoria.","04"]].map(row=><article className="panel policy-card" key={row[2]}><span>{row[2]}</span><div><h2>{row[0]}</h2><p>{row[1]}</p></div></article>)}</section>}
+  </>;
+}
+
 const calendarViews = ["Mês", "Semana", "Dia", "Agenda"] as const;
 type CalendarView = (typeof calendarViews)[number];
 
@@ -302,7 +399,7 @@ export default function Home() {
       <a className="brand" href="#top" aria-label="NexaFlow Demo — início"><span className="brand-mark">N</span><span><strong>NexaFlow</strong><small>DEMONSTRAÇÃO FICTÍCIA</small></span></a>
       <button className="tenant"><span><small>Empresa</small><strong>100 · AURORA COMÉRCIO DEMO</strong></span><b>⌄</b></button>
       <label className="sidebar-search"><span aria-hidden="true">⌕</span><input aria-label="Buscar módulos" placeholder="Buscar módulos..." /></label>
-      <nav aria-label="Seções da demonstração"><p>Principal</p>{productModules.slice(0,3).map(navButton)}<p>Módulos</p>{productModules.slice(3).map(navButton)}<p>Portfólio</p>{portfolioModules.map(navButton)}</nav>
+      <nav aria-label="Seções da demonstração"><p>Principal</p>{productModules.slice(0,2).map(navButton)}<p>Módulos</p>{productModules.slice(2).map(navButton)}<p>Portfólio</p>{portfolioModules.map(navButton)}</nav>
       <div className="sidebar-bottom"><div className="demo-user"><span>AD</span><div><strong>Aloyr Demo</strong><small>Acesso fictício</small></div></div><a href="https://ylaros.github.io/">← Voltar ao portfólio</a></div>
     </aside>
     <main id="top">
@@ -311,7 +408,10 @@ export default function Home() {
       <div className="module-content">
         {activeModule==="Visão geral"&&<Overview />}
         {activeModule==="Central de Operações"&&<Operations tab={operationsTab} setTab={setOperationsTab} onNotice={showNotice} />}
-        {activeModule==="Cofre"&&<Vault type={cofreType} setType={setCofreType} onNotice={showNotice} />}
+        {activeModule==="Fiscal"&&<FiscalModule type={cofreType} setType={setCofreType} onNotice={showNotice} />}
+        {activeModule==="Contábil"&&<AccountingModule onNotice={showNotice} />}
+        {activeModule==="Trabalhista"&&<LaborModule onNotice={showNotice} />}
+        {activeModule==="Inteligência de Mercado"&&<MarketIntelligence onNotice={showNotice} />}
         {activeModule==="Calendário"&&<CalendarDemo view={calendarView} setView={setCalendarView} onNotice={showNotice} />}
         {activeModule==="Empresas"&&<Companies onNotice={showNotice} />}
         {activeModule==="Tecnologias"&&<Technologies />}
