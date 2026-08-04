@@ -12,10 +12,10 @@ test("o build estático identifica claramente a demonstração fictícia", async
 
 test("os módulos disponíveis possuem experiências próprias", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-  for (const moduleName of ["Visão geral", "Central de Operações", "Fiscal", "Contábil", "Trabalhista", "Inteligência de Mercado", "Calendário", "Empresas", "Tecnologias"]) {
+  for (const moduleName of ["Visão geral", "Central de Operações", "Fiscal", "Contábil", "Trabalhista", "Inteligência de Mercado", "Calendário", "Empresas", "Guia dos módulos", "Tecnologias"]) {
     assert.match(source, new RegExp(`"${moduleName}"`));
   }
-  for (const componentName of ["Operations", "FiscalModule", "AccountingModule", "LaborModule", "MarketIntelligence", "Vault", "CalendarDemo", "Companies", "Technologies"]) {
+  for (const componentName of ["Operations", "FiscalModule", "AccountingModule", "LaborModule", "MarketIntelligence", "Vault", "CalendarDemo", "Companies", "ProductGuide", "Technologies"]) {
     assert.match(source, new RegExp(`function ${componentName}`));
   }
   assert.match(source, /role="tab"/);
@@ -36,6 +36,16 @@ test("inteligência de mercado preserva privacidade e usa apenas dados demonstra
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   for (const signal of ["Privacidade por amostra", "Benchmark ético", "CNAE", "Prontidão cadastral", "Nenhuma consulta externa é realizada"]) {
     assert.match(source, new RegExp(signal));
+  }
+});
+
+test("o guia documenta o papel original, a adaptação e as abas de cada módulo", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  for (const signal of ["No produto original", "Nesta demonstração", "Fluxo representado", "ABAS E FUNÇÕES", "Resultado", "Abrir demonstração"]) {
+    assert.match(source, new RegExp(signal));
+  }
+  for (const documentedModule of ["Central de Operações", "Fiscal", "Contábil", "Trabalhista", "Inteligência de Mercado", "Calendário", "Empresas", "Tecnologias"]) {
+    assert.match(source, new RegExp(`name:\"${documentedModule}\"`));
   }
 });
 

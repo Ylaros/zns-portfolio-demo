@@ -12,6 +12,7 @@ As áreas disponíveis preservam o sentido dos fluxos do produto, mas foram impl
 - **Inteligência de Mercado:** CNAE, recorte regional, prontidão cadastral e benchmark anonimizado;
 - **Calendário:** visões de mês, semana, dia e agenda;
 - **Empresas:** diretório pesquisável de cadastros demonstrativos;
+- **Guia dos módulos:** documentação funcional interativa sobre o papel original, as abas, os fluxos e a adaptação pública de cada área;
 - **Tecnologias:** ficha técnica pública da arquitetura e das práticas do projeto.
 
 Todas as interações usam apenas estado local e dados sintéticos. Não há conexão com APIs, serviços ou infraestrutura do ZNS.
