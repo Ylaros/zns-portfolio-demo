@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 const productModules = ["Visão geral", "Central de Operações", "Fiscal", "Contábil", "Trabalhista", "Inteligência de Mercado", "Calendário", "Empresas"] as const;
-const portfolioModules = ["Tecnologias"] as const;
+const portfolioModules = ["Guia dos módulos", "Tecnologias"] as const;
 const modules = [...productModules, ...portfolioModules] as const;
 type ModuleName = (typeof modules)[number];
 
@@ -46,6 +46,10 @@ const moduleMeta: Record<ModuleName, { eyebrow: string; description: string; act
     description: "Diretório demonstrativo com contexto operacional e módulos ativos.",
     action: "Nova empresa demo",
   },
+  "Guia dos módulos": {
+    eyebrow: "Documentação funcional",
+    description: "Entenda o papel de cada módulo, suas abas e o fluxo representado nesta demonstração.",
+  },
   Tecnologias: {
     eyebrow: "Ficha técnica",
     description: "Tecnologias e práticas presentes na construção do produto original.",
@@ -61,6 +65,7 @@ const navIcons: Record<ModuleName, string> = {
   "Inteligência de Mercado": "◉",
   Calendário: "□",
   Empresas: "◇",
+  "Guia dos módulos": "☷",
   Tecnologias: "⌘",
 };
 
@@ -362,6 +367,98 @@ function Companies({ onNotice }: { onNotice: (message: string) => void }) {
   return <><section className="company-summary"><Kpi label="Empresas ativas" value="24" detail="Carteira inteiramente fictícia" tone="success" /><Kpi label="Em onboarding" value="2" detail="Fluxos demonstrativos" tone="warning" /><Kpi label="Solicitações abertas" value="10" detail="Em quatro empresas demo" tone="info" /></section><section className="panel companies-panel"><div className="directory-toolbar"><div><h2>Diretório de empresas</h2><p>Cadastros sintéticos para explorar a navegação</p></div><input aria-label="Buscar empresas" placeholder="Buscar por nome, código ou segmento..." value={query} onChange={event=>setQuery(event.target.value)} /></div><div className="company-grid">{filtered.map((company,index)=><button className="company-card" key={company.code} onClick={()=>onNotice(`${company.name} aberta em modo demonstrativo`)}><div className={`company-logo logo-${index+1}`}>{company.name[0]}</div><div className="company-main"><span><code>{company.code}</code><Status tone={company.tone}>{company.tone==="success"?"Ativa":"Onboarding"}</Status></span><h3>{company.name}</h3><p>{company.segment}</p><div className="module-chips">{company.modules.map(module=><small key={module}>{module}</small>)}</div></div><div className="company-open"><b>{company.open}</b><span>pendências</span><em>→</em></div></button>)}</div></section></>;
 }
 
+type GuideTab = { name: string; purpose: string; outcome: string };
+type GuideEntry = { name: Exclude<ModuleName,"Guia dos módulos">; label: string; summary: string; original: string; demo: string; flow: string[]; tabs: GuideTab[]; capabilities: string[] };
+
+const moduleGuides: GuideEntry[] = [
+  {
+    name:"Visão geral", label:"Leitura executiva", summary:"A porta de entrada do produto: transforma sinais dispersos em uma visão curta do que aconteceu, do que está pendente e do que vence em seguida.",
+    original:"No projeto original, esta área consolida indicadores autorizados de diferentes rotinas e empresas para reduzir a troca de telas e orientar a prioridade diária da equipe.",
+    demo:"A demonstração representa volume documental, movimento financeiro, pendências, compromissos e alertas com números inteiramente sintéticos.",
+    flow:["Coletar sinais","Consolidar indicadores","Priorizar atenção","Abrir o módulo responsável"],
+    tabs:[{name:"Painel único",purpose:"Reúne os principais indicadores operacionais e financeiros do período.",outcome:"Decisão mais rápida sobre onde agir."},{name:"Atividade",purpose:"Mostra a evolução diária de eventos processados pelo sistema.",outcome:"Percepção de ritmo, estabilidade e picos."},{name:"Agenda e alertas",purpose:"Destaca prazos, compromissos e exceções que exigem atenção.",outcome:"Menos riscos de atraso ou esquecimento."}],
+    capabilities:["KPIs consolidados","Alertas acionáveis","Agenda integrada","Navegação contextual"],
+  },
+  {
+    name:"Central de Operações", label:"Orquestração do trabalho", summary:"Organiza solicitações, tarefas, responsáveis, prazos e comunicação em uma esteira comum para toda a operação.",
+    original:"No produto original, a Central conecta demandas internas e externas ao trabalho executado por cada setor, mantendo histórico, responsabilidade e rastreabilidade da entrega.",
+    demo:"Os cartões, pessoas, prazos e mensagens são fictícios, mas preservam a lógica de uma operação multiárea acompanhada do início à conclusão.",
+    flow:["Receber solicitação","Planejar tarefas","Executar e comunicar","Validar entrega","Concluir"],
+    tabs:[{name:"Visão Geral",purpose:"Resume volume, prazo, carga de trabalho e itens aguardando retorno.",outcome:"Panorama operacional imediato."},{name:"Quadros",purpose:"Distribui solicitações por estágio em uma visualização Kanban.",outcome:"Gargalos e progresso ficam visíveis."},{name:"Solicitações",purpose:"Centraliza contexto, tarefas, mensagens, responsáveis e prazo de cada demanda.",outcome:"Histórico completo em um único lugar."},{name:"Minhas Pendências",purpose:"Filtra somente o trabalho que depende do usuário atual.",outcome:"Foco individual sem perder o contexto."},{name:"Cronograma",purpose:"Posiciona solicitações e tarefas em uma linha do tempo.",outcome:"Antecipação de conflitos e atrasos."}],
+    capabilities:["Kanban","SLA e prazos","Responsabilidade","Mensagens","Linha do tempo","Auditoria"],
+  },
+  {
+    name:"Fiscal", label:"Documentos e escrituração", summary:"Conecta captura de documentos fiscais, classificação assistida, revisão humana e preparação da escrituração.",
+    original:"No projeto original, o módulo recebe DF-e, interpreta itens, aplica regras e histórico, calcula confiança, sinaliza inconsistências e mantém a decisão humana antes da integração contábil.",
+    demo:"As notas, produtos, NCMs, valores, empresas e sugestões são sintéticos. A interação demonstra o raciocínio do fluxo sem executar classificação ou exportação real.",
+    flow:["Capturar XML","Ler itens e tributos","Sugerir classificação","Revisar alertas","Aprovar","Preparar escrituração"],
+    tabs:[{name:"Painel fiscal",purpose:"Resume o período e mostra a esteira entre notas capturadas, classificadas, conferidas e exportadas.",outcome:"Visibilidade do fechamento e de onde existem gargalos."},{name:"Classificador",purpose:"Apresenta sugestões de grupo, CFOP e tratamento fiscal por item, acompanhadas de confiança e alertas.",outcome:"Automação com revisão humana explícita e rastreável."},{name:"Cofre DF-e",purpose:"Organiza NF-e, NFC-e, CT-e, NFS-e e documentos incompletos, com filtros e ações em lote.",outcome:"Consulta documental centralizada e apoio à operação fiscal."}],
+    capabilities:["XML DF-e","Motor de regras","Histórico por produto","Confiança","Alertas fiscais","Aprovação humana","Exportação estruturada"],
+  },
+  {
+    name:"Contábil", label:"Fechamento e qualidade", summary:"Transforma saldos e lançamentos em uma rotina de análise, conciliação e tratamento de pendências do fechamento.",
+    original:"No projeto original, esta área apoia a leitura do balancete e a identificação de variações, composições ou lançamentos que precisam de explicação antes do fechamento.",
+    demo:"Os saldos, contas e percentuais são fictícios e existem apenas para comunicar o desenho funcional e o tipo de decisão apoiada.",
+    flow:["Importar saldos","Comparar períodos","Detectar variações","Conciliar","Resolver pendências","Fechar"],
+    tabs:[{name:"Balancete",purpose:"Apresenta composição patrimonial, evolução dos saldos e nível de preparação do fechamento.",outcome:"Leitura clara da posição contábil."},{name:"Análise por classificação",purpose:"Compara contas e destaca variações acima do comportamento esperado.",outcome:"Revisão direcionada por relevância."},{name:"Conciliação",purpose:"Relaciona movimentos e aponta lançamentos sem correspondência.",outcome:"Menos diferenças e trabalho manual."},{name:"Pendências",purpose:"Prioriza itens por impacto, responsável e prazo.",outcome:"Fechamento controlado e rastreável."}],
+    capabilities:["Balancete","Análise horizontal","Composição de saldos","Conciliação","Detecção de anomalias","Pendências"],
+  },
+  {
+    name:"Trabalhista", label:"Folha e pessoas", summary:"Acompanha indicadores de folha, movimentações de funcionários e exceções que merecem revisão preventiva.",
+    original:"No produto original, o módulo organiza informações autorizadas do departamento pessoal para comparar períodos, acompanhar eventos e antecipar inconsistências antes da entrega.",
+    demo:"Funcionários, empresas, valores e ocorrências são fictícios. Nenhum dado pessoal ou trabalhista real é exibido ou consultado.",
+    flow:["Consolidar folha","Comparar competência","Revisar movimentações","Auditar exceções","Acompanhar correção"],
+    tabs:[{name:"Dashboard",purpose:"Resume quadro ativo, admissões, férias, afastamentos e alertas da competência.",outcome:"Panorama da carteira trabalhista."},{name:"Comparações",purpose:"Compara salários, encargos, benefícios e horas extras entre períodos.",outcome:"Variações relevantes ficam evidentes."},{name:"Funcionários",purpose:"Oferece consulta operacional aos cadastros e situações de cada pessoa.",outcome:"Contexto centralizado para atendimento."},{name:"Auditoria",purpose:"Agrupa sinais de jornada, férias, documentação e variação salarial.",outcome:"Prevenção de erros antes do fechamento."}],
+    capabilities:["Indicadores de folha","Movimentações","Comparativo mensal","Alertas preventivos","Consulta de pessoas"],
+  },
+  {
+    name:"Inteligência de Mercado", label:"Contexto setorial", summary:"Enriquece a carteira com CNAE, território, maturidade cadastral e comparativos agregados com proteção de privacidade.",
+    original:"No projeto original, esta frente foi desenhada para combinar fontes autorizadas, recortes geográficos e comportamento agregado sem expor o desempenho individual de clientes.",
+    demo:"A página usa empresas, identificadores, regiões e índices sintéticos. A consulta CNPJ não chama qualquer serviço externo.",
+    flow:["Qualificar cadastro","Definir território","Aplicar amostra mínima","Gerar snapshot","Comparar contexto"],
+    tabs:[{name:"Visão geral",purpose:"Mostra prontidão por dimensão, distribuição territorial e frentes analíticas.",outcome:"Entendimento rápido da qualidade e cobertura da base."},{name:"Consulta CNPJ",purpose:"Demonstra como contexto cadastral e regional poderia ser apresentado.",outcome:"Leitura estruturada de uma empresa."},{name:"Empresas / prontidão",purpose:"Aponta lacunas de CNAE, zona ou cadastro antes das análises.",outcome:"Base mais confiável para comparação."},{name:"Políticas e fontes",purpose:"Explica amostra mínima, anonimização, fontes e rastreabilidade.",outcome:"Uso responsável e auditável dos indicadores."}],
+    capabilities:["CNAE","Geografia","Prontidão cadastral","Benchmark ético","Amostra mínima","Snapshots"],
+  },
+  {
+    name:"Calendário", label:"Tempo e compromissos", summary:"Reúne compromissos, prazos operacionais e disponibilidade da equipe em diferentes escalas de tempo.",
+    original:"No produto original, o calendário aproxima agenda e operação para que reuniões, entregas e tarefas críticas possam ser visualizadas no mesmo contexto.",
+    demo:"Todos os eventos, participantes e salas são fictícios; as interações apenas alternam formas de visualização.",
+    flow:["Registrar compromisso","Relacionar contexto","Visualizar período","Acompanhar prazo"],
+    tabs:[{name:"Mês",purpose:"Visão ampla de compromissos e prazos distribuídos no calendário.",outcome:"Planejamento da capacidade do período."},{name:"Semana",purpose:"Posiciona eventos em horários e dias úteis.",outcome:"Leitura de disponibilidade e conflitos."},{name:"Dia",purpose:"Detalha a agenda e o encadeamento de um único dia.",outcome:"Execução diária mais previsível."},{name:"Agenda",purpose:"Lista os próximos eventos em ordem cronológica.",outcome:"Consulta rápida do que vem a seguir."}],
+    capabilities:["Múltiplas visualizações","Prazos operacionais","Categorias","Contexto compartilhado"],
+  },
+  {
+    name:"Empresas", label:"Contexto multiempresa", summary:"Mantém uma visão pesquisável da carteira e dos módulos, situações e pendências associados a cada organização.",
+    original:"No projeto original, o cadastro de empresas funciona como contexto transversal: permissões, documentos, tarefas e indicadores respeitam a organização selecionada.",
+    demo:"A carteira possui somente empresas e códigos inventados e não reproduz cadastros, vínculos ou identificadores reais.",
+    flow:["Cadastrar empresa","Habilitar módulos","Definir contexto","Acompanhar situação"],
+    tabs:[{name:"Diretório",purpose:"Pesquisa empresas por nome, código ou segmento.",outcome:"Acesso rápido ao contexto correto."},{name:"Cartão da empresa",purpose:"Resume situação, módulos habilitados e quantidade de pendências.",outcome:"Orientação antes de abrir a operação."},{name:"Seletor global",purpose:"Representa a troca de contexto usada pelos demais módulos.",outcome:"Navegação multiempresa consistente."}],
+    capabilities:["Multi-tenant","Pesquisa","Contexto global","Módulos por empresa","Permissões por escopo"],
+  },
+  {
+    name:"Tecnologias", label:"Arquitetura do produto", summary:"Apresenta a stack e as práticas que sustentam interface, APIs, dados, processamento, integração e segurança.",
+    original:"A página descreve tecnologias efetivamente relevantes ao projeto original em nível de portfólio, sem publicar código, credenciais, endereços ou configuração privada.",
+    demo:"A ficha é informativa e agrupa a arquitetura por responsabilidade para facilitar a leitura técnica por recrutadores e desenvolvedores.",
+    flow:["Interface","API e regras","Dados e workers","Integrações","Qualidade e segurança"],
+    tabs:[{name:"Frontend",purpose:"Tecnologias usadas na experiência web e no gerenciamento de estado.",outcome:"Interface consistente e responsiva."},{name:"Backend",purpose:"APIs, validação, regras de negócio e processamento assíncrono.",outcome:"Serviços organizados e escaláveis."},{name:"Dados e infraestrutura",purpose:"Persistência, cache, containers e automação de entrega.",outcome:"Operação previsível e rastreável."},{name:"Integrações e documentos",purpose:"Protocolos e formatos que conectam sistemas e documentos fiscais.",outcome:"Interoperabilidade com segurança."},{name:"Qualidade e segurança",purpose:"Práticas de isolamento, auditoria, testes e revisão.",outcome:"Produto mais confiável e sustentável."}],
+    capabilities:["Next.js","React","TypeScript","FastAPI","PostgreSQL","Redis","Celery","Docker","RBAC","CI/CD"],
+  },
+];
+
+function ProductGuide({onOpenModule}:{onOpenModule:(module:ModuleName)=>void}){
+  const [active,setActive]=useState<GuideEntry["name"]>("Fiscal");
+  const guide=moduleGuides.find(item=>item.name===active) ?? moduleGuides[0];
+  return <section className="guide-layout">
+    <aside className="panel guide-index"><div><span>MAPA DO PRODUTO</span><h2>Guia dos módulos</h2><p>Selecione uma área para conhecer o papel dela no produto.</p></div><nav aria-label="Módulos documentados">{moduleGuides.map((item,index)=><button key={item.name} className={active===item.name?"active":""} aria-current={active===item.name?"page":undefined} onClick={()=>setActive(item.name)}><span>{String(index+1).padStart(2,"0")}</span><div><strong>{item.name}</strong><small>{item.label}</small></div><em>→</em></button>)}</nav></aside>
+    <article className="guide-detail">
+      <header className="panel guide-hero"><div><span>{guide.label.toUpperCase()}</span><h2>{guide.name}</h2><p>{guide.summary}</p></div><button className="accent-button" onClick={()=>onOpenModule(guide.name)}>Abrir demonstração →</button><div className="guide-original"><b>No produto original</b><p>{guide.original}</p></div><div className="guide-demo"><b>Nesta demonstração</b><p>{guide.demo}</p></div></header>
+      <section className="panel guide-flow"><div className="panel-head"><div><h2>Fluxo representado</h2><p>Como a informação percorre o módulo</p></div><Status tone="info">Visão funcional</Status></div><div>{guide.flow.map((step,index)=><span key={step}><i>{index+1}</i><b>{step}</b>{index<guide.flow.length-1&&<em>→</em>}</span>)}</div></section>
+      <section className="guide-tabs-section"><div className="guide-section-title"><div><span>ABAS E FUNÇÕES</span><h2>O que cada área resolve</h2></div><b>{guide.tabs.length} áreas explicadas</b></div><div className="guide-tab-grid">{guide.tabs.map((tab,index)=><article className="panel guide-tab-card" key={tab.name}><span>{String(index+1).padStart(2,"0")}</span><div><h3>{tab.name}</h3><p>{tab.purpose}</p><footer><b>Resultado</b><small>{tab.outcome}</small></footer></div></article>)}</div></section>
+      <section className="panel guide-capabilities"><div><span>CAPACIDADES RELACIONADAS</span><h2>Conceitos demonstrados</h2></div><ul>{guide.capabilities.map(item=><li key={item}>{item}</li>)}</ul></section>
+    </article>
+  </section>;
+}
+
 const technologyGroups = [
   { title: "Frontend", description: "Interface, estado e visualização", items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS 4", "TanStack Query", "Recharts", "Base UI", "Radix UI", "Motion", "Lucide"] },
   { title: "Backend", description: "APIs, regras e processamento", items: ["Python", "FastAPI", "SQLAlchemy", "Pydantic", "Alembic", "Celery", "APIs REST", "Workers assíncronos"] },
@@ -414,6 +511,7 @@ export default function Home() {
         {activeModule==="Inteligência de Mercado"&&<MarketIntelligence onNotice={showNotice} />}
         {activeModule==="Calendário"&&<CalendarDemo view={calendarView} setView={setCalendarView} onNotice={showNotice} />}
         {activeModule==="Empresas"&&<Companies onNotice={showNotice} />}
+        {activeModule==="Guia dos módulos"&&<ProductGuide onOpenModule={selectModule} />}
         {activeModule==="Tecnologias"&&<Technologies />}
       </div>
       <footer className="site-footer"><span>NexaFlow é uma demonstração fictícia criada para o portfólio de Aloyr.</span><span>Sem conexão com dados, APIs ou infraestrutura reais.</span></footer>
